@@ -1,0 +1,62 @@
+[
+  {
+    "id": "loc-1",
+    "name": "ساختمان مرکزی - طبقه ۵ (دفتر ریاست)",
+    "building": "ساختمان مرکزی",
+    "display_order": 1,
+    "unit": "واحد ۵۰۱",
+    "floor": "۵",
+    "room": "",
+    "active": true
+  },
+  {
+    "id": "loc-2",
+    "name": "ساختمان فناوری و نوآوری - طبقه ۳",
+    "building": "ساختمان فناوری",
+    "display_order": 2,
+    "unit": "واحد ۳۰۲",
+    "floor": "۳",
+    "room": "",
+    "active": true
+  },
+  {
+    "id": "loc-3",
+    "name": "ساختمان مرکزی - طبقه ۲ (اداری و مالی)",
+    "building": "ساختمان مرکزی",
+    "display_order": 3,
+    "unit": "واحد ۲۰۱",
+    "floor": "۲",
+    "room": "",
+    "active": true
+  },
+  {
+    "id": "loc-4",
+    "name": "برج بازرگانی و فروش - طبقه ۴",
+    "building": "برج بازرگانی",
+    "display_order": 4,
+    "unit": "واحد ۴۰۱",
+    "floor": "۴",
+    "room": "",
+    "active": true
+  },
+  {
+    "id": "loc-5",
+    "name": "پردیس پژوهش و توسعه",
+    "building": "پردیس فناوری",
+    "display_order": 5,
+    "unit": "واحد همکف",
+    "floor": "همکف",
+    "room": "",
+    "active": true
+  },
+  {
+    "id": "loc-6",
+    "name": "مجتمع خدمات و پشتیبانی - طبقه ۱",
+    "building": "مجتمع خدمات",
+    "display_order": 6,
+    "unit": "واحد ۱۰۱",
+    "floor": "۱",
+    "room": "",
+    "active": true
+  }
+]

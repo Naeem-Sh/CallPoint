@@ -1,0 +1,12 @@
+{
+  "organization_name": "سازمان توسعه و نوآوری داده‌محور",
+  "sub_title": "سامانه راهنمای ارتباطات و تلفن پرسنل (شبکه داخلی)",
+  "logo_url": null,
+  "timezone": "Asia/Tehran",
+  "default_sort_field": "personnel_code",
+  "default_sort_order": "asc",
+  "retention_days": 30,
+  "theme": "system",
+  "contact_info": "پشتیبانی شبکه و فاوا: داخلی ۴۰۱ و ۴۰۲",
+  "intranet_banner": "استفاده انحصاری در بستر شبکه داخلی سازمان - محرمانه"
+}

@@ -1,0 +1,1794 @@
+[
+  {
+    "id": "emp-1",
+    "first_name": "علیرضا",
+    "last_name": "رستگار",
+    "full_name": "علیرضا رستگار",
+    "personnel_code": "1001",
+    "department_id": "dept-1",
+    "position_id": "pos-1",
+    "extension": "101",
+    "direct_phone": "021-88901001",
+    "mobile": "09121110011",
+    "email": "a.rastegar@org.ir, a.rastegar.backup@corp.ir",
+    "emails": [
+      "a.rastegar@org.ir",
+      "a.rastegar.backup@corp.ir"
+    ],
+    "location_id": "loc-1",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۵۰۱",
+    "floor": "۵",
+    "room": "اتاق ۵۰۱ (دفتر مدیریت)",
+    "notes": "دکترای مدیریت استراتژیک، جلسات با هماهنگی حوزه ریاست",
+    "avatar": "/api/uploads/employees/emp_emp-1.jpg",
+    "phones": [
+      {
+        "id": "p-emp-1-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "101",
+        "primary": true
+      },
+      {
+        "id": "p-emp-1-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88901001",
+        "primary": true
+      },
+      {
+        "id": "p-emp-1-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09121110011",
+        "primary": true
+      },
+      {
+        "id": "p-emp-1-ext2",
+        "type": "extension",
+        "label": "داخلی دوم",
+        "number": "111",
+        "primary": false
+      },
+      {
+        "id": "p-emp-1-dir2",
+        "type": "office",
+        "label": "مستقیم دوم",
+        "number": "021-88901002",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 185,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-2",
+    "first_name": "پروانه",
+    "last_name": "حسینی",
+    "full_name": "پروانه حسینی",
+    "personnel_code": "1002",
+    "department_id": "dept-1",
+    "position_id": "pos-2",
+    "extension": "103",
+    "direct_phone": "021-88901003",
+    "mobile": "09121110022",
+    "email": "p.hosseini@org.ir",
+    "emails": [
+      "p.hosseini@org.ir"
+    ],
+    "location_id": "loc-1",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۵۰۱",
+    "floor": "۵",
+    "room": "اتاق ۵۰۲",
+    "notes": "قائم‌مقام و پیگیری پروژه‌های اولویت‌دار سازمانی",
+    "avatar": "/api/uploads/employees/emp_emp-2.jpg",
+    "phones": [
+      {
+        "id": "p-emp-2-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "103",
+        "primary": true
+      },
+      {
+        "id": "p-emp-2-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88901003",
+        "primary": true
+      },
+      {
+        "id": "p-emp-2-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09121110022",
+        "primary": true
+      },
+      {
+        "id": "p-emp-2-mob2",
+        "type": "mobile",
+        "label": "همراه کاری",
+        "number": "09351110022",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 96,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-3",
+    "first_name": "نرگس",
+    "last_name": "کیانی",
+    "full_name": "نرگس کیانی",
+    "personnel_code": "1003",
+    "department_id": "dept-1",
+    "position_id": "pos-9",
+    "extension": "100",
+    "direct_phone": "021-88901000",
+    "mobile": "09121110033",
+    "email": "n.kiani@org.ir, n.kiani.backup@corp.ir",
+    "emails": [
+      "n.kiani@org.ir",
+      "n.kiani.backup@corp.ir"
+    ],
+    "location_id": "loc-1",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۵۰۱",
+    "floor": "۵",
+    "room": "دفتر حوزه ریاست",
+    "notes": "هماهنگی وقت ملاقات و برنامه‌ریزی جلسات هیئت‌مدیره",
+    "avatar": "/api/uploads/employees/emp_emp-3.jpg",
+    "phones": [
+      {
+        "id": "p-emp-3-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "100",
+        "primary": true
+      },
+      {
+        "id": "p-emp-3-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88901000",
+        "primary": true
+      },
+      {
+        "id": "p-emp-3-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09121110033",
+        "primary": true
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 142,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-4",
+    "first_name": "وحید",
+    "last_name": "کاظمی",
+    "full_name": "وحید کاظمی",
+    "personnel_code": "1004",
+    "department_id": "dept-2",
+    "position_id": "pos-3",
+    "extension": "201",
+    "direct_phone": "021-88902001",
+    "mobile": "09122220011",
+    "email": "v.kazemi@org.ir",
+    "emails": [
+      "v.kazemi@org.ir"
+    ],
+    "location_id": "loc-2",
+    "building": "ساختمان فناوری",
+    "unit": "واحد ۳۰۲",
+    "floor": "۳",
+    "room": "اتاق ۳۰۱",
+    "notes": "مدیریت فاوا، پاسخگویی موارد اضطراری سرورها و امنیت",
+    "avatar": "/api/uploads/employees/emp_emp-4.jpg",
+    "phones": [
+      {
+        "id": "p-emp-4-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "201",
+        "primary": true
+      },
+      {
+        "id": "p-emp-4-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88902001",
+        "primary": true
+      },
+      {
+        "id": "p-emp-4-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09122220011",
+        "primary": true
+      },
+      {
+        "id": "p-emp-4-ext2",
+        "type": "extension",
+        "label": "داخلی دوم",
+        "number": "211",
+        "primary": false
+      },
+      {
+        "id": "p-emp-4-dir2",
+        "type": "office",
+        "label": "مستقیم دوم",
+        "number": "021-88902002",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 215,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-5",
+    "first_name": "فرزاد",
+    "last_name": "صفایی",
+    "full_name": "فرزاد صفایی",
+    "personnel_code": "1005",
+    "department_id": "dept-2",
+    "position_id": "pos-5",
+    "extension": "202",
+    "direct_phone": "021-88902002",
+    "mobile": "09122220022",
+    "email": "f.safaei@org.ir",
+    "emails": [
+      "f.safaei@org.ir"
+    ],
+    "location_id": "loc-2",
+    "building": "ساختمان فناوری",
+    "unit": "واحد ۳۰۲",
+    "floor": "۳",
+    "room": "اتاق سرور ۳۰۲",
+    "notes": "سرپرست زیرساخت، دیتاسنتر، سوییچینگ شبکه و فایروال",
+    "avatar": "/api/uploads/employees/emp_emp-5.jpg",
+    "phones": [
+      {
+        "id": "p-emp-5-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "202",
+        "primary": true
+      },
+      {
+        "id": "p-emp-5-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88902002",
+        "primary": true
+      },
+      {
+        "id": "p-emp-5-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09122220022",
+        "primary": true
+      },
+      {
+        "id": "p-emp-5-mob2",
+        "type": "mobile",
+        "label": "همراه کاری",
+        "number": "09302220022",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 88,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-6",
+    "first_name": "سمانه",
+    "last_name": "یوسفی",
+    "full_name": "سمانه یوسفی",
+    "personnel_code": "1006",
+    "department_id": "dept-2",
+    "position_id": "pos-6",
+    "extension": "204",
+    "direct_phone": "021-88902004",
+    "mobile": "09122220033",
+    "email": "s.yousefi@org.ir",
+    "emails": [
+      "s.yousefi@org.ir"
+    ],
+    "location_id": "loc-2",
+    "building": "ساختمان فناوری",
+    "unit": "واحد ۳۰۲",
+    "floor": "۳",
+    "room": "آزمایشگاه نرم‌افزار ۳۰۵",
+    "notes": "کارشناس ارشد معماری سامانه‌های نرم‌افزاری و وب سرویس‌ها",
+    "avatar": "/api/uploads/employees/emp_emp-6.jpg",
+    "phones": [
+      {
+        "id": "p-emp-6-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "204",
+        "primary": true
+      },
+      {
+        "id": "p-emp-6-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88902004",
+        "primary": true
+      },
+      {
+        "id": "p-emp-6-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09122220033",
+        "primary": true
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 72,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-7",
+    "first_name": "آرش",
+    "last_name": "مهرابی",
+    "full_name": "آرش مهرابی",
+    "personnel_code": "1007",
+    "department_id": "dept-2",
+    "position_id": "pos-6",
+    "extension": "205",
+    "direct_phone": "021-88902005",
+    "mobile": "09122220044",
+    "email": "a.mehrabi@org.ir, a.mehrabi.backup@corp.ir",
+    "emails": [
+      "a.mehrabi@org.ir",
+      "a.mehrabi.backup@corp.ir"
+    ],
+    "location_id": "loc-2",
+    "building": "ساختمان فناوری",
+    "unit": "واحد ۳۰۲",
+    "floor": "۳",
+    "room": "آزمایشگاه نرم‌افزار ۳۰۶",
+    "notes": "توسعه‌دهنده فرانت‌اند و مدیریت دیتابیس سامانه‌ها",
+    "avatar": "/api/uploads/employees/emp_emp-7.jpg",
+    "phones": [
+      {
+        "id": "p-emp-7-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "205",
+        "primary": true
+      },
+      {
+        "id": "p-emp-7-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88902005",
+        "primary": true
+      },
+      {
+        "id": "p-emp-7-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09122220044",
+        "primary": true
+      },
+      {
+        "id": "p-emp-7-ext2",
+        "type": "extension",
+        "label": "داخلی دوم",
+        "number": "215",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 65,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-8",
+    "first_name": "مریم",
+    "last_name": "سعیدی",
+    "full_name": "مریم سعیدی",
+    "personnel_code": "1008",
+    "department_id": "dept-3",
+    "position_id": "pos-3",
+    "extension": "301",
+    "direct_phone": "021-88903001",
+    "mobile": "09123330011",
+    "email": "m.saeedi@org.ir",
+    "emails": [
+      "m.saeedi@org.ir"
+    ],
+    "location_id": "loc-3",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۲۰۱",
+    "floor": "۲",
+    "room": "اتاق ۲۰۱",
+    "notes": "برنامه‌ریزی منابع انسانی، ارزیابی عملکرد و آموزش",
+    "avatar": "/api/uploads/employees/emp_emp-8.jpg",
+    "phones": [
+      {
+        "id": "p-emp-8-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "301",
+        "primary": true
+      },
+      {
+        "id": "p-emp-8-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88903001",
+        "primary": true
+      },
+      {
+        "id": "p-emp-8-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09123330011",
+        "primary": true
+      },
+      {
+        "id": "p-emp-8-dir2",
+        "type": "office",
+        "label": "مستقیم دوم",
+        "number": "021-88903002",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 128,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-9",
+    "first_name": "امیرحسین",
+    "last_name": "مرادی",
+    "full_name": "امیرحسین مرادی",
+    "personnel_code": "1009",
+    "department_id": "dept-3",
+    "position_id": "pos-4",
+    "extension": "302",
+    "direct_phone": "021-88903002",
+    "mobile": "09123330022",
+    "email": "a.moradi@org.ir",
+    "emails": [
+      "a.moradi@org.ir"
+    ],
+    "location_id": "loc-3",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۲۰۱",
+    "floor": "۲",
+    "room": "اتاق ۲۰۲",
+    "notes": "رئیس اداره امور اداری، استخدام، گزینش و رفاه پرسنلی",
+    "avatar": "/api/uploads/employees/emp_emp-9.jpg",
+    "phones": [
+      {
+        "id": "p-emp-9-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "302",
+        "primary": true
+      },
+      {
+        "id": "p-emp-9-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88903002",
+        "primary": true
+      },
+      {
+        "id": "p-emp-9-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09123330022",
+        "primary": true
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 74,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-10",
+    "first_name": "بهناز",
+    "last_name": "شمس",
+    "full_name": "بهناز شمس",
+    "personnel_code": "1010",
+    "department_id": "dept-3",
+    "position_id": "pos-7",
+    "extension": "304",
+    "direct_phone": "021-88903004",
+    "mobile": "09123330033",
+    "email": "b.shams@org.ir",
+    "emails": [
+      "b.shams@org.ir"
+    ],
+    "location_id": "loc-3",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۲۰۱",
+    "floor": "۲",
+    "room": "اتاق ۲۰۳",
+    "notes": "صدور احکام کارگزینی، ثبت مرخصی‌ها و پرونده پرسنل",
+    "avatar": "/api/uploads/employees/emp_emp-10.jpg",
+    "phones": [
+      {
+        "id": "p-emp-10-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "304",
+        "primary": true
+      },
+      {
+        "id": "p-emp-10-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88903004",
+        "primary": true
+      },
+      {
+        "id": "p-emp-10-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09123330033",
+        "primary": true
+      },
+      {
+        "id": "p-emp-10-ext2",
+        "type": "extension",
+        "label": "داخلی دوم",
+        "number": "314",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 42,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-11",
+    "first_name": "بهروز",
+    "last_name": "کریمی",
+    "full_name": "بهروز کریمی",
+    "personnel_code": "1011",
+    "department_id": "dept-4",
+    "position_id": "pos-3",
+    "extension": "401",
+    "direct_phone": "021-88904001",
+    "mobile": "09124440011",
+    "email": "b.karimi@org.ir",
+    "emails": [
+      "b.karimi@org.ir"
+    ],
+    "location_id": "loc-3",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۲۰۱",
+    "floor": "۲",
+    "room": "اتاق ۲۱۰",
+    "notes": "مدیر مالی و ذی‌حساب، کنترل بودجه و اعتبارات سالانه",
+    "avatar": "/api/uploads/employees/emp_emp-11.jpg",
+    "phones": [
+      {
+        "id": "p-emp-11-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "401",
+        "primary": true
+      },
+      {
+        "id": "p-emp-11-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88904001",
+        "primary": true
+      },
+      {
+        "id": "p-emp-11-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09124440011",
+        "primary": true
+      },
+      {
+        "id": "p-emp-11-dir2",
+        "type": "office",
+        "label": "مستقیم دوم",
+        "number": "021-88904002",
+        "primary": false
+      },
+      {
+        "id": "p-emp-11-mob2",
+        "type": "mobile",
+        "label": "همراه کاری",
+        "number": "09194440011",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 135,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-12",
+    "first_name": "فاطمه",
+    "last_name": "دانایی",
+    "full_name": "فاطمه دانایی",
+    "personnel_code": "1012",
+    "department_id": "dept-4",
+    "position_id": "pos-4",
+    "extension": "402",
+    "direct_phone": "021-88904002",
+    "mobile": "09124440022",
+    "email": "f.danaei@org.ir",
+    "emails": [
+      "f.danaei@org.ir"
+    ],
+    "location_id": "loc-3",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۲۰۱",
+    "floor": "۲",
+    "room": "اتاق ۲۱۱",
+    "notes": "رئیس حسابداری مالی، امور بانکی، اسناد و تضامین",
+    "avatar": "/api/uploads/employees/emp_emp-12.jpg",
+    "phones": [
+      {
+        "id": "p-emp-12-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "402",
+        "primary": true
+      },
+      {
+        "id": "p-emp-12-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88904002",
+        "primary": true
+      },
+      {
+        "id": "p-emp-12-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09124440022",
+        "primary": true
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 85,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-13",
+    "first_name": "کامران",
+    "last_name": "پوریا",
+    "full_name": "کامران پوریا",
+    "personnel_code": "1013",
+    "department_id": "dept-4",
+    "position_id": "pos-6",
+    "extension": "404",
+    "direct_phone": "021-88904004",
+    "mobile": "09124440033",
+    "email": "k.pouria@org.ir",
+    "emails": [
+      "k.pouria@org.ir"
+    ],
+    "location_id": "loc-3",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۲۰۱",
+    "floor": "۲",
+    "room": "اتاق ۲۱۲",
+    "notes": "کارشناس ارشد حقوق و دستمزد و بیمه تامین اجتماعی",
+    "avatar": "/api/uploads/employees/emp_emp-13.jpg",
+    "phones": [
+      {
+        "id": "p-emp-13-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "404",
+        "primary": true
+      },
+      {
+        "id": "p-emp-13-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88904004",
+        "primary": true
+      },
+      {
+        "id": "p-emp-13-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09124440033",
+        "primary": true
+      },
+      {
+        "id": "p-emp-13-ext2",
+        "type": "extension",
+        "label": "داخلی دوم",
+        "number": "414",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 53,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-14",
+    "first_name": "مسعود",
+    "last_name": "شایگان",
+    "full_name": "مسعود شایگان",
+    "personnel_code": "1014",
+    "department_id": "dept-5",
+    "position_id": "pos-3",
+    "extension": "501",
+    "direct_phone": "021-88905001",
+    "mobile": "09125550011",
+    "email": "m.shayegan@org.ir",
+    "emails": [
+      "m.shayegan@org.ir"
+    ],
+    "location_id": "loc-4",
+    "building": "برج بازرگانی",
+    "unit": "واحد ۴۰۱",
+    "floor": "۴",
+    "room": "اتاق ۴۰۱",
+    "notes": "مدیر بازرگانی و فروش، توسعه بازار و تفاهم‌نامه‌های تجاری",
+    "avatar": "/api/uploads/employees/emp_emp-14.jpg",
+    "phones": [
+      {
+        "id": "p-emp-14-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "501",
+        "primary": true
+      },
+      {
+        "id": "p-emp-14-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88905001",
+        "primary": true
+      },
+      {
+        "id": "p-emp-14-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09125550011",
+        "primary": true
+      },
+      {
+        "id": "p-emp-14-dir2",
+        "type": "office",
+        "label": "مستقیم دوم",
+        "number": "021-88905002",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 140,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-15",
+    "first_name": "الهام",
+    "last_name": "زارعی",
+    "full_name": "الهام زارعی",
+    "personnel_code": "1015",
+    "department_id": "dept-5",
+    "position_id": "pos-7",
+    "extension": "502",
+    "direct_phone": "021-88905002",
+    "mobile": "09125550022",
+    "email": "e.zarei@org.ir, e.zarei.backup@corp.ir",
+    "emails": [
+      "e.zarei@org.ir",
+      "e.zarei.backup@corp.ir"
+    ],
+    "location_id": "loc-4",
+    "building": "برج بازرگانی",
+    "unit": "واحد ۴۰۱",
+    "floor": "۴",
+    "room": "اتاق ۴۰۲",
+    "notes": "کارشناس امور مشتریان عمده و ارتباط با نهادها",
+    "avatar": "/api/uploads/employees/emp_emp-15.jpg",
+    "phones": [
+      {
+        "id": "p-emp-15-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "502",
+        "primary": true
+      },
+      {
+        "id": "p-emp-15-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88905002",
+        "primary": true
+      },
+      {
+        "id": "p-emp-15-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09125550022",
+        "primary": true
+      },
+      {
+        "id": "p-emp-15-mob2",
+        "type": "mobile",
+        "label": "همراه کاری",
+        "number": "09305550022",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 68,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-16",
+    "first_name": "نیما",
+    "last_name": "اسکندری",
+    "full_name": "نیما اسکندری",
+    "personnel_code": "1016",
+    "department_id": "dept-5",
+    "position_id": "pos-7",
+    "extension": "504",
+    "direct_phone": "021-88905004",
+    "mobile": "09125550033",
+    "email": "n.eskandari@org.ir",
+    "emails": [
+      "n.eskandari@org.ir"
+    ],
+    "location_id": "loc-4",
+    "building": "برج بازرگانی",
+    "unit": "واحد ۴۰۱",
+    "floor": "۴",
+    "room": "اتاق ۴۰۳",
+    "notes": "تحلیل بازار، پیگیری سفارش‌ها و پیش‌فاکتورها",
+    "avatar": "/api/uploads/employees/emp_emp-16.jpg",
+    "phones": [
+      {
+        "id": "p-emp-16-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "504",
+        "primary": true
+      },
+      {
+        "id": "p-emp-16-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88905004",
+        "primary": true
+      },
+      {
+        "id": "p-emp-16-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09125550033",
+        "primary": true
+      },
+      {
+        "id": "p-emp-16-ext2",
+        "type": "extension",
+        "label": "داخلی دوم",
+        "number": "514",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 60,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-17",
+    "first_name": "پریسا",
+    "last_name": "دهقان",
+    "full_name": "پریسا دهقان",
+    "personnel_code": "1017",
+    "department_id": "dept-5",
+    "position_id": "pos-7",
+    "extension": "505",
+    "direct_phone": "021-88905005",
+    "mobile": "09125550044",
+    "email": "p.dehghan@org.ir",
+    "emails": [
+      "p.dehghan@org.ir"
+    ],
+    "location_id": "loc-4",
+    "building": "برج بازرگانی",
+    "unit": "واحد ۴۰۱",
+    "floor": "۴",
+    "room": "اتاق ۴۰۵",
+    "notes": "تنظیم قراردادهای تجاری، مناقصات و مزایدات",
+    "avatar": "/api/uploads/employees/emp_emp-17.jpg",
+    "phones": [
+      {
+        "id": "p-emp-17-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "505",
+        "primary": true
+      },
+      {
+        "id": "p-emp-17-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88905005",
+        "primary": true
+      },
+      {
+        "id": "p-emp-17-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09125550044",
+        "primary": true
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 48,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-18",
+    "first_name": "شاهین",
+    "last_name": "افشار",
+    "full_name": "شاهین افشار",
+    "personnel_code": "1018",
+    "department_id": "dept-2",
+    "position_id": "pos-8",
+    "extension": "207",
+    "direct_phone": "021-88902007",
+    "mobile": "09122220055",
+    "email": "sh.afshar@org.ir",
+    "emails": [
+      "sh.afshar@org.ir"
+    ],
+    "location_id": "loc-2",
+    "building": "ساختمان فناوری",
+    "unit": "واحد ۳۰۲",
+    "floor": "۳",
+    "room": "میز پشتیبانی ۳۰۸",
+    "notes": "پشتیبانی فنی سیستم‌ها، ماشین‌های اداری و شبکه",
+    "avatar": "/api/uploads/employees/emp_emp-18.jpg",
+    "phones": [
+      {
+        "id": "p-emp-18-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "207",
+        "primary": true
+      },
+      {
+        "id": "p-emp-18-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88902007",
+        "primary": true
+      },
+      {
+        "id": "p-emp-18-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09122220055",
+        "primary": true
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 110,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-19",
+    "first_name": "سمیه",
+    "last_name": "غفاری",
+    "full_name": "سمیه غفاری",
+    "personnel_code": "1019",
+    "department_id": "dept-5",
+    "position_id": "pos-11",
+    "extension": "507",
+    "direct_phone": "021-88905007",
+    "mobile": "09125550055",
+    "email": "s.ghaffari@org.ir",
+    "emails": [
+      "s.ghaffari@org.ir"
+    ],
+    "location_id": "loc-4",
+    "building": "برج بازرگانی",
+    "unit": "واحد ۴۰۱",
+    "floor": "۴",
+    "room": "اتاق ۴۰۶",
+    "notes": "مشاور حقوقی و کارشناس رسیدگی به دعاوی و قراردادها",
+    "avatar": "/api/uploads/employees/emp_emp-19.jpg",
+    "phones": [
+      {
+        "id": "p-emp-19-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "507",
+        "primary": true
+      },
+      {
+        "id": "p-emp-19-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88905007",
+        "primary": true
+      },
+      {
+        "id": "p-emp-19-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09125550055",
+        "primary": true
+      },
+      {
+        "id": "p-emp-19-ext2",
+        "type": "extension",
+        "label": "داخلی دوم",
+        "number": "517",
+        "primary": false
+      },
+      {
+        "id": "p-emp-19-mob2",
+        "type": "mobile",
+        "label": "همراه کاری",
+        "number": "09215550055",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 57,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-20",
+    "first_name": "کیوان",
+    "last_name": "صامتی",
+    "full_name": "کیوان صامتی",
+    "personnel_code": "1020",
+    "department_id": "dept-3",
+    "position_id": "pos-12",
+    "extension": "305",
+    "direct_phone": "021-88903005",
+    "mobile": "09123330044",
+    "email": "k.sameti@org.ir",
+    "emails": [
+      "k.sameti@org.ir"
+    ],
+    "location_id": "loc-3",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۲۰۱",
+    "floor": "۲",
+    "room": "دبیرخانه مرکزی همکف",
+    "notes": "سرپرست دبیرخانه و بایگانی اسناد، گردش مکاتبات اداری",
+    "avatar": "/api/uploads/employees/emp_emp-20.jpg",
+    "phones": [
+      {
+        "id": "p-emp-20-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "305",
+        "primary": true
+      },
+      {
+        "id": "p-emp-20-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88903005",
+        "primary": true
+      },
+      {
+        "id": "p-emp-20-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09123330044",
+        "primary": true
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 92,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-21",
+    "first_name": "احسان",
+    "last_name": "میرزایی",
+    "full_name": "احسان میرزایی",
+    "personnel_code": "1021",
+    "department_id": "dept-6",
+    "position_id": "pos-3",
+    "extension": "601",
+    "direct_phone": "021-88906001",
+    "mobile": "09126660011",
+    "email": "e.mirzaei@org.ir, e.mirzaei.backup@corp.ir",
+    "emails": [
+      "e.mirzaei@org.ir",
+      "e.mirzaei.backup@corp.ir"
+    ],
+    "location_id": "loc-5",
+    "building": "پردیس فناوری",
+    "unit": "واحد همکف",
+    "floor": "همکف",
+    "room": "آزمایشگاه تحقیق و نوآوری",
+    "notes": "دکترای هوش مصنوعی، راهبری پروژه‌های پژوهشی و فناوری‌های نوین",
+    "avatar": "/api/uploads/employees/emp_emp-21.jpg",
+    "phones": [
+      {
+        "id": "p-emp-21-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "601",
+        "primary": true
+      },
+      {
+        "id": "p-emp-21-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88906001",
+        "primary": true
+      },
+      {
+        "id": "p-emp-21-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09126660011",
+        "primary": true
+      },
+      {
+        "id": "p-emp-21-dir2",
+        "type": "office",
+        "label": "مستقیم دوم",
+        "number": "021-88906002",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 115,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-22",
+    "first_name": "زهرا",
+    "last_name": "طاهری",
+    "full_name": "زهرا طاهری",
+    "personnel_code": "1022",
+    "department_id": "dept-6",
+    "position_id": "pos-13",
+    "extension": "602",
+    "direct_phone": "021-88906002",
+    "mobile": "09126660022",
+    "email": "z.taheri@org.ir",
+    "emails": [
+      "z.taheri@org.ir"
+    ],
+    "location_id": "loc-5",
+    "building": "پردیس فناوری",
+    "unit": "واحد همکف",
+    "floor": "همکف",
+    "room": "اتاق پژوهش ۱۰۲",
+    "notes": "کارشناس ارشد یادگیری ماشین، پردازش داده‌های کلان و بینایی ماشین",
+    "avatar": "/api/uploads/employees/emp_emp-22.jpg",
+    "phones": [
+      {
+        "id": "p-emp-22-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "602",
+        "primary": true
+      },
+      {
+        "id": "p-emp-22-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88906002",
+        "primary": true
+      },
+      {
+        "id": "p-emp-22-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09126660022",
+        "primary": true
+      },
+      {
+        "id": "p-emp-22-ext2",
+        "type": "extension",
+        "label": "داخلی دوم",
+        "number": "612",
+        "primary": false
+      },
+      {
+        "id": "p-emp-22-mob2",
+        "type": "mobile",
+        "label": "همراه کاری",
+        "number": "09356660022",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 78,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-23",
+    "first_name": "نگار",
+    "last_name": "سهرابی",
+    "full_name": "نگار سهرابی",
+    "personnel_code": "1023",
+    "department_id": "dept-7",
+    "position_id": "pos-3",
+    "extension": "701",
+    "direct_phone": "021-88907001",
+    "mobile": "09127770011",
+    "email": "n.sohrabi@org.ir, n.sohrabi.backup@corp.ir",
+    "emails": [
+      "n.sohrabi@org.ir",
+      "n.sohrabi.backup@corp.ir"
+    ],
+    "location_id": "loc-1",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۵۰۱",
+    "floor": "۵",
+    "room": "اتاق ۵۰۵",
+    "notes": "مدیر روابط عمومی، تشریفات، نشست‌های مطبوعاتی و امور بین‌الملل",
+    "avatar": "/api/uploads/employees/emp_emp-23.jpg",
+    "phones": [
+      {
+        "id": "p-emp-23-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "701",
+        "primary": true
+      },
+      {
+        "id": "p-emp-23-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88907001",
+        "primary": true
+      },
+      {
+        "id": "p-emp-23-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09127770011",
+        "primary": true
+      },
+      {
+        "id": "p-emp-23-dir2",
+        "type": "office",
+        "label": "مستقیم دوم",
+        "number": "021-88907002",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 130,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-24",
+    "first_name": "میلاد",
+    "last_name": "باقری",
+    "full_name": "میلاد باقری",
+    "personnel_code": "1024",
+    "department_id": "dept-7",
+    "position_id": "pos-14",
+    "extension": "702",
+    "direct_phone": "021-88907002",
+    "mobile": "09127770022",
+    "email": "m.bagheri@org.ir",
+    "emails": [
+      "m.bagheri@org.ir"
+    ],
+    "location_id": "loc-1",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۵۰۱",
+    "floor": "۵",
+    "room": "اتاق ۵۰۶",
+    "notes": "کارشناس رسانه، تولید محتوای دیجیتال و پورتال اطلاع‌رسانی",
+    "avatar": "/api/uploads/employees/emp_emp-24.jpg",
+    "phones": [
+      {
+        "id": "p-emp-24-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "702",
+        "primary": true
+      },
+      {
+        "id": "p-emp-24-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88907002",
+        "primary": true
+      },
+      {
+        "id": "p-emp-24-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09127770022",
+        "primary": true
+      },
+      {
+        "id": "p-emp-24-mob2",
+        "type": "mobile",
+        "label": "همراه کاری",
+        "number": "09217770022",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 64,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-25",
+    "first_name": "جلال",
+    "last_name": "نوری",
+    "full_name": "جلال نوری",
+    "personnel_code": "1025",
+    "department_id": "dept-8",
+    "position_id": "pos-3",
+    "extension": "801",
+    "direct_phone": "021-88908001",
+    "mobile": "09128880011",
+    "email": "j.nouri@org.ir",
+    "emails": [
+      "j.nouri@org.ir"
+    ],
+    "location_id": "loc-1",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۵۰۱",
+    "floor": "۵",
+    "room": "ساختمان مرکزی، ورودی الف",
+    "notes": "مدیر حراست، حفاظت فیزیکی، بازرسی و امنیت اماکن سازمانی",
+    "avatar": "/api/uploads/employees/emp_emp-25.jpg",
+    "phones": [
+      {
+        "id": "p-emp-25-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "801",
+        "primary": true
+      },
+      {
+        "id": "p-emp-25-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88908001",
+        "primary": true
+      },
+      {
+        "id": "p-emp-25-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09128880011",
+        "primary": true
+      },
+      {
+        "id": "p-emp-25-ext2",
+        "type": "extension",
+        "label": "داخلی دوم",
+        "number": "811",
+        "primary": false
+      },
+      {
+        "id": "p-emp-25-dir2",
+        "type": "office",
+        "label": "مستقیم دوم",
+        "number": "021-88908002",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 150,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-26",
+    "first_name": "حسین",
+    "last_name": "احمدی",
+    "full_name": "حسین احمدی",
+    "personnel_code": "1026",
+    "department_id": "dept-8",
+    "position_id": "pos-15",
+    "extension": "802",
+    "direct_phone": "021-88908002",
+    "mobile": "09128880022",
+    "email": "h.ahmadi@org.ir",
+    "emails": [
+      "h.ahmadi@org.ir"
+    ],
+    "location_id": "loc-1",
+    "building": "ساختمان مرکزی",
+    "unit": "واحد ۵۰۱",
+    "floor": "۵",
+    "room": "اتاق مانیتورینگ ۱۰۱",
+    "notes": "سرپرست کنترل تردد و دوربین‌های نظارتی، گشت‌های دوره‌ای",
+    "avatar": "/api/uploads/employees/emp_emp-26.jpg",
+    "phones": [
+      {
+        "id": "p-emp-26-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "802",
+        "primary": true
+      },
+      {
+        "id": "p-emp-26-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88908002",
+        "primary": true
+      },
+      {
+        "id": "p-emp-26-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09128880022",
+        "primary": true
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 83,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-27",
+    "first_name": "کیانوش",
+    "last_name": "راد",
+    "full_name": "کیانوش راد",
+    "personnel_code": "1027",
+    "department_id": "dept-9",
+    "position_id": "pos-3",
+    "extension": "901",
+    "direct_phone": "021-88909001",
+    "mobile": "09129990011",
+    "email": "k.rad@org.ir",
+    "emails": [
+      "k.rad@org.ir"
+    ],
+    "location_id": "loc-4",
+    "building": "برج بازرگانی",
+    "unit": "واحد ۴۰۱",
+    "floor": "۴",
+    "room": "اتاق ۴۰۸",
+    "notes": "مدیر برنامه‌ریزی، مدیریت استراتژیک، ارزیابی فرآیندها و استانداردهای کیفی",
+    "avatar": "/api/uploads/employees/emp_emp-27.jpg",
+    "phones": [
+      {
+        "id": "p-emp-27-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "901",
+        "primary": true
+      },
+      {
+        "id": "p-emp-27-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88909001",
+        "primary": true
+      },
+      {
+        "id": "p-emp-27-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09129990011",
+        "primary": true
+      },
+      {
+        "id": "p-emp-27-dir2",
+        "type": "office",
+        "label": "مستقیم دوم",
+        "number": "021-88909002",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 95,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-28",
+    "first_name": "شیما",
+    "last_name": "انصاری",
+    "full_name": "شیما انصاری",
+    "personnel_code": "1028",
+    "department_id": "dept-9",
+    "position_id": "pos-6",
+    "extension": "902",
+    "direct_phone": "021-88909002",
+    "mobile": "09129990022",
+    "email": "sh.ansari@org.ir",
+    "emails": [
+      "sh.ansari@org.ir"
+    ],
+    "location_id": "loc-4",
+    "building": "برج بازرگانی",
+    "unit": "واحد ۴۰۱",
+    "floor": "۴",
+    "room": "اتاق ۴۰۹",
+    "notes": "کارشناس ارشد تعالی سازمانی، ممیزی داخلی و استقرار استانداردهای ISO",
+    "avatar": "/api/uploads/employees/emp_emp-28.jpg",
+    "phones": [
+      {
+        "id": "p-emp-28-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "902",
+        "primary": true
+      },
+      {
+        "id": "p-emp-28-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88909002",
+        "primary": true
+      },
+      {
+        "id": "p-emp-28-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09129990022",
+        "primary": true
+      },
+      {
+        "id": "p-emp-28-ext2",
+        "type": "extension",
+        "label": "داخلی دوم",
+        "number": "912",
+        "primary": false
+      },
+      {
+        "id": "p-emp-28-mob2",
+        "type": "mobile",
+        "label": "همراه کاری",
+        "number": "09909990022",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 58,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-29",
+    "first_name": "حسن",
+    "last_name": "دادرس",
+    "full_name": "حسن دادرس",
+    "personnel_code": "1029",
+    "department_id": "dept-10",
+    "position_id": "pos-3",
+    "extension": "951",
+    "direct_phone": "021-88909501",
+    "mobile": "09129550011",
+    "email": "h.dadras@org.ir",
+    "emails": [
+      "h.dadras@org.ir"
+    ],
+    "location_id": "loc-6",
+    "building": "مجتمع خدمات",
+    "unit": "واحد ۱۰۱",
+    "floor": "۱",
+    "room": "ساختمان پشتیبانی ۱۰۲",
+    "notes": "مدیر خدمات عمومی و پشتیبانی، مدیریت ناوگان ترابری و خدمات رفاهی",
+    "avatar": "/api/uploads/employees/emp_emp-29.jpg",
+    "phones": [
+      {
+        "id": "p-emp-29-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "951",
+        "primary": true
+      },
+      {
+        "id": "p-emp-29-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88909501",
+        "primary": true
+      },
+      {
+        "id": "p-emp-29-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09129550011",
+        "primary": true
+      },
+      {
+        "id": "p-emp-29-dir2",
+        "type": "office",
+        "label": "مستقیم دوم",
+        "number": "021-88909502",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 105,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  },
+  {
+    "id": "emp-30",
+    "first_name": "مهدی",
+    "last_name": "یعقوبی",
+    "full_name": "مهدی یعقوبی",
+    "personnel_code": "1030",
+    "department_id": "dept-10",
+    "position_id": "pos-7",
+    "extension": "952",
+    "direct_phone": "021-88909502",
+    "mobile": "09129550022",
+    "email": "m.yaghoubi@org.ir",
+    "emails": [
+      "m.yaghoubi@org.ir"
+    ],
+    "location_id": "loc-6",
+    "building": "مجتمع خدمات",
+    "unit": "واحد ۱۰۱",
+    "floor": "۱",
+    "room": "انبار مرکزی همکف",
+    "notes": "کارشناس انبارداری، مدیریت موجودی کالا و تدارکات مصرفی",
+    "avatar": "/api/uploads/employees/emp_emp-30.jpg",
+    "phones": [
+      {
+        "id": "p-emp-30-ext1",
+        "type": "extension",
+        "label": "داخلی مستقیم",
+        "number": "952",
+        "primary": true
+      },
+      {
+        "id": "p-emp-30-dir1",
+        "type": "office",
+        "label": "تلفن مستقیم کار",
+        "number": "021-88909502",
+        "primary": true
+      },
+      {
+        "id": "p-emp-30-mob1",
+        "type": "mobile",
+        "label": "همراه",
+        "number": "09129550022",
+        "primary": true
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 70,
+    "created_at": "2026-09-08T08:42:34.164Z",
+    "updated_at": "2026-09-08T08:42:34.164Z",
+    "internal_metadata": {
+      "initial_import": true
+    }
+  }
+]
