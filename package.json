@@ -1,7 +1,31 @@
 {
-  "name": "react-example",
+  "name": "org-phonebook",
+  "description": "سامانه حرفه‌ای و جامع دفتر تلفن سازمانی، پرسنلی و راهنمای داخلی‌ها با معماری Server-First و ذخیره‌سازی پایدار",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
+  "author": "shaaeri <shaaeri@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shaaeri/org-phonebook.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shaaeri/org-phonebook/issues"
+  },
+  "homepage": "https://github.com/shaaeri/org-phonebook#readme",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "phonebook",
+    "directory",
+    "organization",
+    "persian",
+    "shamsi",
+    "docker",
+    "express",
+    "react"
+  ],
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
