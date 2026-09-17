@@ -11,7 +11,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
     volumes:
-      # پایگاه داده محلی، عکس‌های پرسنل، لوگو و بکاپ‌های خودکار
+      # Persistent storage for JSON database, employee avatars, company assets, and automated backups
       - ./storage:/app/storage
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]

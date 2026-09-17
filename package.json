@@ -1,6 +1,6 @@
 {
   "name": "org-phonebook",
-  "description": "سامانه حرفه‌ای و جامع دفتر تلفن سازمانی، پرسنلی و راهنمای داخلی‌ها با معماری Server-First و ذخیره‌سازی پایدار",
+  "description": "Enterprise organization phonebook, employee directory, and extension management system with persistent storage and Docker support",
   "version": "1.0.0",
   "private": true,
   "author": "shaaeri <shaaeri@gmail.com>",
@@ -19,12 +19,13 @@
   "keywords": [
     "phonebook",
     "directory",
+    "employee-directory",
     "organization",
-    "persian",
-    "shamsi",
     "docker",
     "express",
-    "react"
+    "react",
+    "typescript",
+    "tailwind"
   ],
   "type": "module",
   "scripts": {
