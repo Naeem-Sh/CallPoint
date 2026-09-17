@@ -73,16 +73,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [isResetting, setIsResetting] = useState(false);
   const [resetMessage, setResetMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const tabs = [
-    { id: 'overview', label: 'پیشخوان و سلامت', icon: LayoutDashboard },
-    { id: 'employees', label: 'مدیریت کارکنان', icon: Users },
-    { id: 'departments', label: 'واحدهای سازمانی', icon: Building },
-    { id: 'locations', label: 'محل‌های استقرار', icon: MapPin },
-    { id: 'excel', label: 'ورود و خروجی اکسل', icon: FileSpreadsheet },
-    { id: 'backup', label: 'پشتیبان‌گیری و بازیابی', icon: HardDrive },
-    { id: 'audit', label: 'ثبت وقایع (Audit)', icon: ShieldAlert },
-    { id: 'settings', label: 'تنظیمات و کاربران', icon: Settings },
+  const isAdmin = currentUser?.role === 'admin';
+
+  const allTabs = [
+    { id: 'overview', label: 'پیشخوان و سلامت', icon: LayoutDashboard, adminOnly: false },
+    { id: 'employees', label: 'مدیریت کارکنان', icon: Users, adminOnly: false },
+    { id: 'departments', label: 'واحدهای سازمانی', icon: Building, adminOnly: false },
+    { id: 'locations', label: 'محل‌های استقرار', icon: MapPin, adminOnly: false },
+    { id: 'excel', label: 'ورود و خروجی اکسل', icon: FileSpreadsheet, adminOnly: true },
+    { id: 'backup', label: 'پشتیبان‌گیری و بازیابی', icon: HardDrive, adminOnly: true },
+    { id: 'audit', label: 'ثبت وقایع (Audit)', icon: ShieldAlert, adminOnly: true },
+    { id: 'settings', label: 'تنظیمات و کاربران', icon: Settings, adminOnly: true },
   ];
+
+  const tabs = allTabs.filter((tab) => !tab.adminOnly || isAdmin);
+
+  // Safety fallback if active tab is restricted
+  const effectiveActiveTab = tabs.some((t) => t.id === activeTab) ? activeTab : 'overview';
 
   const handleExecuteReset = async () => {
     setIsResetting(true);
@@ -91,7 +98,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       const res = await api.resetDatabase(backupBeforeReset);
       setResetMessage({
         type: 'success',
-        text: res.message || 'پایگاه داده پرسنل با موفقیت پاکسازی شد.',
+        text: res.message || 'پایگاه داده کارکنان با موفقیت پاکسازی شد.',
       });
       await onRefreshAll();
       setTimeout(() => {
@@ -191,7 +198,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {tabs.map((tab) => {
           const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
+          const isActive = effectiveActiveTab === tab.id;
           return (
             <button
               key={tab.id}
@@ -212,16 +219,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
       {/* Tab Contents */}
       <div>
-        {activeTab === 'overview' && (
+        {effectiveActiveTab === 'overview' && (
           <AdminOverview
             stats={stats}
             health={health}
             currentUser={currentUser}
+            employees={employees}
+            locations={locations}
             onNavigateTab={(tab) => setActiveTab(tab)}
           />
         )}
 
-        {activeTab === 'employees' && (
+        {effectiveActiveTab === 'employees' && (
           <AdminEmployees
             employees={employees}
             fields={fields}
@@ -232,7 +241,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           />
         )}
 
-        {activeTab === 'departments' && (
+        {effectiveActiveTab === 'departments' && (
           <AdminDepartments
             departments={departments}
             employees={employees}
@@ -241,7 +250,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           />
         )}
 
-        {activeTab === 'locations' && (
+        {effectiveActiveTab === 'locations' && (
           <AdminLocations
             locations={locations}
             employees={employees}
@@ -249,7 +258,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           />
         )}
 
-        {activeTab === 'excel' && (
+        {effectiveActiveTab === 'excel' && isAdmin && (
           <AdminExcel
             departments={departments}
             fields={fields}
@@ -257,11 +266,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           />
         )}
 
-        {activeTab === 'backup' && <AdminBackup onRefreshAll={onRefreshAll} />}
+        {effectiveActiveTab === 'backup' && isAdmin && <AdminBackup onRefreshAll={onRefreshAll} />}
 
-        {activeTab === 'audit' && <AdminAuditAndHealth />}
+        {effectiveActiveTab === 'audit' && isAdmin && <AdminAuditAndHealth />}
 
-        {activeTab === 'settings' && (
+        {effectiveActiveTab === 'settings' && isAdmin && (
           <AdminSettingsAndUsers
             settings={settings}
             onRefreshSettings={onRefreshAll}
@@ -299,9 +308,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 آیا از پاکسازی کلیه اطلاعات پایگاه داده اطمینان کامل دارید؟
               </p>
               <div className="p-3.5 rounded-2xl bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900 text-rose-800 dark:text-rose-200 space-y-1.5">
-                <p className="font-bold">• تمامی رکوردهای پرسنلی، شماره‌ها، واحدهای سازمانی، سمت‌ها و محل‌های استقرار به طور کامل پاک خواهند شد.</p>
+                <p className="font-bold">• تمامی رکوردهای کارکنان، شماره‌ها، واحدهای سازمانی، سمت‌ها و محل‌های استقرار به طور کامل پاک خواهند شد.</p>
                 <p>• حساب‌های کاربری مدیر و تنظیمات پایه جهت ادامه کار حفظ می‌شوند.</p>
-                <p>• این عملیات جهت آماده‌سازی پایگاه داده برای ورود تازه شماره‌ها و پرسنل از طریق فایل اکسل طراحی شده است.</p>
+                <p>• این عملیات جهت آماده‌سازی پایگاه داده برای ورود تازه شماره‌ها و کارکنان از طریق فایل اکسل طراحی شده است.</p>
               </div>
 
               {/* Option to create backup first */}

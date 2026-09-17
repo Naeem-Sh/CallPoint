@@ -123,8 +123,35 @@ export const api = {
   getEmployee: (id: string) => request(`/api/employees/${id}`),
   createEmployee: (data: any) => request('/api/employees', { method: 'POST', body: JSON.stringify(data) }),
   updateEmployee: (id: string, data: any) => request(`/api/employees/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteEmployee: (id: string) => request(`/api/employees/${id}`, { method: 'DELETE' }),
+  deleteEmployee: (id: string, reason?: string) =>
+    request(`/api/employees/${id}`, {
+      method: 'DELETE',
+      body: reason ? JSON.stringify({ reason }) : undefined,
+    }),
   duplicateEmployee: (id: string) => request(`/api/employees/${id}/duplicate`, { method: 'POST' }),
+  batchArchiveEmployees: (ids: string[], reason?: string) =>
+    request('/api/employees/batch-archive', {
+      method: 'POST',
+      body: JSON.stringify({ ids, reason }),
+    }),
+
+  // Employee Archive & Recycle Bin
+  getArchivedEmployees: () => request('/api/archive/employees'),
+  restoreArchivedEmployee: (id: string) =>
+    request(`/api/archive/employees/${id}/restore`, { method: 'POST' }),
+  batchRestoreArchivedEmployees: (ids: string[]) =>
+    request('/api/archive/employees/batch-restore', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    }),
+  permanentlyDeleteArchivedEmployee: (id: string) =>
+    request(`/api/archive/employees/${id}`, { method: 'DELETE' }),
+  batchPermanentlyDeleteArchivedEmployees: (ids: string[]) =>
+    request('/api/archive/employees/batch-delete', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    }),
+  emptyArchive: () => request('/api/archive/employees/empty', { method: 'POST' }),
 
   // Quick Search & Highlights
   quickSearch: (q: string) => request(`/api/search?q=${encodeURIComponent(q)}`),
@@ -206,6 +233,14 @@ export const api = {
   seedDummyData: () => request('/api/admin/seed-dummy-data', { method: 'POST' }),
   createBackup: (comment?: string) => request('/api/backup', { method: 'POST', body: JSON.stringify({ comment }) }),
   getBackupList: () => request('/api/backup/list'),
+  getBackupSchedule: () => request('/api/backup/schedule'),
+  updateBackupSchedule: (data: {
+    auto_backup_enabled?: boolean;
+    auto_backup_frequency?: 'weekly' | 'daily' | 'monthly';
+    auto_backup_day_of_week?: number;
+    auto_backup_time?: string;
+  }) => request('/api/backup/schedule', { method: 'PUT', body: JSON.stringify(data) }),
+  triggerAutoBackupNow: () => request('/api/backup/auto-trigger', { method: 'POST' }),
   downloadBackup: async (filename: string) => {
     const token = getAuthToken();
     const res = await fetch(`/api/backup/download/${encodeURIComponent(filename)}`, {
@@ -243,11 +278,13 @@ export const api = {
   getTroubleshootReport: () => request('/api/audit-log/troubleshoot-report'),
   getHealth: () => request('/api/health'),
 
-  // Settings & Logo
+  // Settings, Logo & Default Avatar
   getSettings: () => request('/api/settings'),
   updateSettings: (data: any) => request('/api/settings', { method: 'PUT', body: JSON.stringify(data) }),
   uploadLogo: (formData: FormData) => request('/api/logo', { method: 'POST', body: formData }),
   deleteLogo: () => request('/api/logo', { method: 'DELETE' }),
+  uploadDefaultAvatar: (formData: FormData) => request('/api/default-avatar', { method: 'POST', body: formData }),
+  deleteDefaultAvatar: () => request('/api/default-avatar', { method: 'DELETE' }),
 
   // Upload Employee Avatar
   uploadAvatar: (formData: FormData) => request('/api/upload/photo', { method: 'POST', body: formData }),

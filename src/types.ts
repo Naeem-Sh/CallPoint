@@ -104,6 +104,14 @@ export interface Employee {
   internal_metadata?: Record<string, any>;
 }
 
+export interface ArchivedEmployee extends Employee {
+  archived_at: string;
+  archived_by?: string;
+  archive_reason?: string;
+  original_department_name?: string;
+  original_position_title?: string;
+}
+
 export interface AppUser {
   id: string;
   username: string;
@@ -118,8 +126,10 @@ export interface AppUser {
 
 export interface AppSettings {
   organization_name: string;
-  sub_title: string;
+  sub_title?: string;
+  subtitle?: string;
   logo_url: string | null;
+  default_avatar?: string | null;
   timezone: string;
   default_sort_field: string;
   default_sort_order: 'asc' | 'desc';
@@ -127,12 +137,21 @@ export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   contact_info?: string;
   intranet_banner?: string;
+  session_timeout_minutes?: number;
+  search_debounce_ms?: number;
+  // Automatic Scheduled Backup
+  auto_backup_enabled?: boolean;
+  auto_backup_frequency?: 'weekly' | 'daily' | 'monthly';
+  auto_backup_day_of_week?: number; // 0: یکشنبه, 1: دوشنبه, 2: سه‌شنبه, 3: چهارشنبه, 4: پنج‌شنبه, 5: جمعه, 6: شنبه
+  auto_backup_time?: string; // e.g. "02:00"
+  last_auto_backup?: string; // ISO string of last automated backup
 }
 
 export interface SystemStatistics {
   total_employees: number;
   active_employees: number;
   inactive_employees: number;
+  archived_employees_count?: number;
   departments_count: number;
   total_phone_numbers: number;
   employees_with_photo: number;

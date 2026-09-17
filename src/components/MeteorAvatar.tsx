@@ -1,5 +1,5 @@
-import React from 'react';
-import { getHighResImageUrl } from '../utils/image.ts';
+import React, { useState, useEffect } from 'react';
+import { getHighResImageUrl, getDefaultAvatar } from '../utils/image.ts';
 
 interface MeteorAvatarProps {
   src?: string | null;
@@ -52,7 +52,28 @@ export const MeteorAvatar: React.FC<MeteorAvatarProps> = ({
   const roundedClass = shape === 'circle' ? 'rounded-full' : size === 'sm' ? 'rounded-xl' : size === 'md' ? 'rounded-2xl' : 'rounded-3xl';
 
   const initial = name.trim() ? name.trim()[0] : '👤';
-  const resolvedSrc = getHighResImageUrl(src);
+  const defaultAvatar = getDefaultAvatar();
+  
+  const [currentSrc, setCurrentSrc] = useState<string | undefined>(() => {
+    return getHighResImageUrl(src) || getHighResImageUrl(defaultAvatar);
+  });
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const resolved = getHighResImageUrl(src) || getHighResImageUrl(getDefaultAvatar());
+    setCurrentSrc(resolved);
+    setHasError(false);
+  }, [src]);
+
+  const handleError = () => {
+    const def = getHighResImageUrl(getDefaultAvatar());
+    // If the failed image wasn't the default avatar, try falling back to the default avatar
+    if (def && currentSrc !== def) {
+      setCurrentSrc(def);
+    } else {
+      setHasError(true);
+    }
+  };
 
   return (
     <div
@@ -60,9 +81,9 @@ export const MeteorAvatar: React.FC<MeteorAvatarProps> = ({
       title={name || alt}
     >
       <div className={`meteor-avatar-inner ${roundedClass}`}>
-        {resolvedSrc ? (
+        {currentSrc && !hasError ? (
           <img
-            src={resolvedSrc}
+            src={currentSrc}
             alt={alt || name}
             referrerPolicy="no-referrer"
             loading="eager"
@@ -72,10 +93,7 @@ export const MeteorAvatar: React.FC<MeteorAvatarProps> = ({
               WebkitPrintColorAdjust: 'exact',
             }}
             className="w-full h-full object-cover select-none"
-            onError={(e) => {
-              // Hide broken image and fallback to initials if loading fails
-              (e.target as HTMLElement).style.display = 'none';
-            }}
+            onError={handleError}
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-tr from-indigo-600 via-purple-600 to-indigo-500 text-white flex items-center justify-center font-black select-none shadow-inner">

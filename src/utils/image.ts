@@ -1,3 +1,28 @@
+let globalDefaultAvatar: string | null = null;
+
+export function setDefaultAvatar(url?: string | null): void {
+  if (url && typeof url === 'string' && url.trim()) {
+    globalDefaultAvatar = url.trim();
+    try {
+      localStorage.setItem('org_directory_default_avatar', globalDefaultAvatar);
+    } catch (_) {}
+  } else {
+    globalDefaultAvatar = null;
+    try {
+      localStorage.removeItem('org_directory_default_avatar');
+    } catch (_) {}
+  }
+}
+
+export function getDefaultAvatar(): string | null {
+  if (globalDefaultAvatar) return globalDefaultAvatar;
+  try {
+    return localStorage.getItem('org_directory_default_avatar');
+  } catch (_) {
+    return null;
+  }
+}
+
 /**
  * Utility to ensure photos and graphics load in ultra-sharp, high-resolution quality
  * without pixelation or compression artifacts during 2X hover zoom, browser zoom,

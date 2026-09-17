@@ -8,6 +8,7 @@ import {
   Position,
   LocationItem,
   Employee,
+  ArchivedEmployee,
   AppSettings,
   AppUser,
   SystemStatistics,
@@ -37,6 +38,7 @@ export const EXPORTS_DIR = path.join(STORAGE_DIR, 'exports');
 
 // File paths
 const EMPLOYEES_FILE = path.join(DATA_DIR, 'employees.json');
+const ARCHIVED_EMPLOYEES_FILE = path.join(DATA_DIR, 'archived_employees.json');
 const DEPARTMENTS_FILE = path.join(DATA_DIR, 'departments.json');
 const FIELDS_FILE = path.join(DATA_DIR, 'fields.json');
 const POSITIONS_FILE = path.join(DATA_DIR, 'positions.json');
@@ -147,6 +149,9 @@ export async function initializeStorage(): Promise<void> {
     const initialEmps = generateInitialEmployees();
     await atomicWriteJson(EMPLOYEES_FILE, initialEmps);
   }
+  if (!fs.existsSync(ARCHIVED_EMPLOYEES_FILE)) {
+    await atomicWriteJson(ARCHIVED_EMPLOYEES_FILE, []);
+  }
   if (!fs.existsSync(SEARCH_STATS_FILE)) {
     await atomicWriteJson(SEARCH_STATS_FILE, []);
   }
@@ -174,6 +179,149 @@ export async function getEmployees(): Promise<Employee[]> {
 
 export async function saveEmployees(employees: Employee[]): Promise<void> {
   await atomicWriteJson(EMPLOYEES_FILE, employees);
+}
+
+export async function getArchivedEmployees(): Promise<ArchivedEmployee[]> {
+  return readJson<ArchivedEmployee[]>(ARCHIVED_EMPLOYEES_FILE, []);
+}
+
+export async function saveArchivedEmployees(archived: ArchivedEmployee[]): Promise<void> {
+  await atomicWriteJson(ARCHIVED_EMPLOYEES_FILE, archived);
+}
+
+export async function archiveEmployee(
+  id: string,
+  reason = 'انتقال به آرشیو توسط مدیر',
+  archivedBy = 'admin'
+): Promise<{ success: boolean; employee?: ArchivedEmployee; message: string }> {
+  const employees = await getEmployees();
+  const empIndex = employees.findIndex(e => e.id === id);
+  if (empIndex === -1) {
+    return { success: false, message: 'کارمند مورد نظر در لیست فعال یافت نشد.' };
+  }
+
+  const target = employees[empIndex];
+  const departments = await getDepartments();
+  const positions = await getPositions();
+  const dept = departments.find(d => d.id === target.department_id);
+  const pos = positions.find(p => p.id === target.position_id);
+
+  const archivedEmp: ArchivedEmployee = {
+    ...target,
+    archived_at: new Date().toISOString(),
+    archived_by: archivedBy,
+    archive_reason: reason,
+    original_department_name: dept ? dept.name : undefined,
+    original_position_title: pos ? pos.title : undefined,
+  };
+
+  const archivedList = await getArchivedEmployees();
+  const updatedArchived = [archivedEmp, ...archivedList.filter(a => a.id !== id)];
+  await saveArchivedEmployees(updatedArchived);
+
+  // Remove from active employees
+  const updatedEmployees = employees.filter(e => e.id !== id);
+  await saveEmployees(updatedEmployees);
+
+  return {
+    success: true,
+    employee: archivedEmp,
+    message: `پرونده «${target.full_name}» به بخش آرشیو و بازیافت منتقل شد.`
+  };
+}
+
+export async function restoreArchivedEmployee(
+  id: string
+): Promise<{ success: boolean; employee?: Employee; message: string }> {
+  const archivedList = await getArchivedEmployees();
+  const archiveIndex = archivedList.findIndex(a => a.id === id);
+  if (archiveIndex === -1) {
+    return { success: false, message: 'پرونده مورد نظر در آرشیو یافت نشد.' };
+  }
+
+  const targetArchived = archivedList[archiveIndex];
+  const employees = await getEmployees();
+
+  // Check if personnel code conflicts with an active employee
+  let personnelCode = targetArchived.personnel_code;
+  if (personnelCode && employees.some(e => e.personnel_code === personnelCode)) {
+    personnelCode = `${personnelCode}_restored`;
+  }
+
+  const now = new Date().toISOString();
+  const restoredEmployee: Employee = {
+    id: targetArchived.id,
+    avatar: targetArchived.avatar,
+    first_name: targetArchived.first_name || '',
+    last_name: targetArchived.last_name || '',
+    full_name: targetArchived.full_name || `${targetArchived.first_name || ''} ${targetArchived.last_name || ''}`.trim(),
+    personnel_code: personnelCode,
+    department_id: targetArchived.department_id,
+    position_id: targetArchived.position_id,
+    extension: targetArchived.extension,
+    direct_phone: targetArchived.direct_phone,
+    mobile: targetArchived.mobile,
+    email: targetArchived.email,
+    location_id: targetArchived.location_id,
+    building: targetArchived.building,
+    unit: targetArchived.unit,
+    floor: targetArchived.floor,
+    room: targetArchived.room,
+    notes: targetArchived.notes,
+    phones: targetArchived.phones || [],
+    custom_fields: targetArchived.custom_fields || {},
+    search_count: targetArchived.search_count || 0,
+    print_order: targetArchived.print_order,
+    created_at: targetArchived.created_at || now,
+    updated_at: now,
+    internal_metadata: {
+      ...(targetArchived.internal_metadata || {}),
+      restored_from_archive_at: now,
+    }
+  };
+
+  // Add back to active employees
+  const updatedEmployees = [restoredEmployee, ...employees.filter(e => e.id !== id)];
+  await saveEmployees(updatedEmployees);
+
+  // Remove from archive
+  const updatedArchived = archivedList.filter(a => a.id !== id);
+  await saveArchivedEmployees(updatedArchived);
+
+  return {
+    success: true,
+    employee: restoredEmployee,
+    message: `پرونده «${restoredEmployee.full_name}» با موفقیت به لیست همکاران فعال بازگردانده شد.`
+  };
+}
+
+export async function permanentlyDeleteArchivedEmployee(
+  id: string
+): Promise<{ success: boolean; message: string }> {
+  const archivedList = await getArchivedEmployees();
+  const target = archivedList.find(a => a.id === id);
+  if (!target) {
+    return { success: false, message: 'پرونده مورد نظر در آرشیو یافت نشد.' };
+  }
+
+  const updatedArchived = archivedList.filter(a => a.id !== id);
+  await saveArchivedEmployees(updatedArchived);
+
+  return {
+    success: true,
+    message: `پرونده «${target.full_name}» به صورت دائمی و قطعی از سیستم حذف شد.`
+  };
+}
+
+export async function emptyArchivedEmployees(): Promise<{ success: boolean; deleted_count: number; message: string }> {
+  const archivedList = await getArchivedEmployees();
+  const count = archivedList.length;
+  await saveArchivedEmployees([]);
+  return {
+    success: true,
+    deleted_count: count,
+    message: `کلیه پرونده‌های موجود در آرشیو (${count} مورد) به صورت دائمی حذف شدند.`
+  };
 }
 
 export async function getDepartments(): Promise<Department[]> {
@@ -446,6 +594,8 @@ export async function calculateStatistics(): Promise<SystemStatistics> {
   const searchesLast24h = searchStats.filter(s => new Date(s.timestamp).getTime() >= oneDayAgo).length;
   const searchesLast7d = searchStats.filter(s => new Date(s.timestamp).getTime() >= sevenDaysAgo).length;
 
+  const archivedEmps = await getArchivedEmployees();
+
   // Check last backup file
   let lastBackupStr = 'ثبت نشده';
   try {
@@ -465,6 +615,7 @@ export async function calculateStatistics(): Promise<SystemStatistics> {
     total_employees: employees.length,
     active_employees: activeEmployees,
     inactive_employees: inactiveEmployees,
+    archived_employees_count: archivedEmps.length,
     departments_count: depts.length,
     total_phone_numbers: totalPhones,
     employees_with_photo: withPhoto,
@@ -614,6 +765,12 @@ export async function createBackupZip(
   }
 
   // Count JSON files and photos in archive
+  let archivedCount = 0;
+  try {
+    const arch = await getArchivedEmployees();
+    archivedCount = arch.length;
+  } catch (_) {}
+
   const allEntries = zip.getEntries();
   const jsonFilesCount = allEntries.filter(e => !e.isDirectory && e.entryName.endsWith('.json')).length + 1; // +1 for backup-metadata.json about to be added
   const photosCount = allEntries.filter(e => !e.isDirectory && e.entryName.startsWith('photos/') && !e.entryName.endsWith('.json') && !e.entryName.endsWith('.txt')).length;
@@ -624,6 +781,7 @@ export async function createBackupZip(
     created_at: new Date().toISOString(),
     comment,
     employee_count: employeesCount,
+    archived_count: archivedCount,
     department_count: deptsCount,
     location_count: locationsCount,
     photo_count: photosCount,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { api, setAuthToken, setStoredUser } from '../utils/api.ts';
 import { AppUser } from '../types.ts';
-import { Lock, User, KeyRound, AlertCircle, X, CheckCircle2, ShieldAlert, Sparkles, UserCheck } from 'lucide-react';
+import { Lock, User, KeyRound, AlertCircle, X, CheckCircle2 } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -10,8 +10,8 @@ interface LoginModalProps {
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -35,24 +35,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
     }
   };
 
-  const handleQuickLogin = async (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
-    setError(null);
-    setLoading(true);
-    try {
-      const res = await api.login({ username: u, password: p });
-      setAuthToken(res.token);
-      setStoredUser(res.user);
-      onLoginSuccess(res.user);
-      onClose();
-    } catch (err: any) {
-      setError(err.message || `خطا در ورود سریع با حساب ${u}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
       <div
@@ -68,14 +50,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-3 mb-5">
+        <div className="flex items-center gap-3 mb-6">
           <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 shadow-xs">
             <Lock className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white">ورود به پنل مدیریت و ویرایش</h3>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">ورود به مدیریت</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              دسترسی مدیریت اطلاعات پرسنل، واحدهای سازمانی و تنظیمات
+              احراز هویت مدیران
             </p>
           </div>
         </div>
@@ -102,7 +84,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
                 autoFocus
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="نام کاربری (مثلاً admin یا editor)"
+                placeholder="نام کاربری"
                 className="w-full pl-3 pr-10 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                 dir="ltr"
               />
@@ -132,58 +114,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
           >
             {loading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
                 <CheckCircle2 className="w-4 h-4" />
-                <span>ورود به سامانه</span>
+                <span>ورود</span>
               </>
             )}
           </button>
         </form>
-
-        {/* Quick Login Presets for Admin and Editor */}
-        <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>ورود سریع با حساب‌های پیش‌فرض سامانه:</span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => handleQuickLogin('admin', '123')}
-              className="p-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/60 text-purple-900 dark:text-purple-200 border border-purple-200 dark:border-purple-800/80 transition-all text-right cursor-pointer group"
-            >
-              <div className="font-black text-xs flex items-center justify-between">
-                <span>مدیر ارشد (admin)</span>
-                <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400">123</span>
-              </div>
-              <div className="text-[10px] text-purple-600 dark:text-purple-400 mt-0.5">
-                دسترسی کامل، بکاپ و کاربران
-              </div>
-            </button>
-
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => handleQuickLogin('editor', '123')}
-              className="p-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800/80 transition-all text-right cursor-pointer group"
-            >
-              <div className="font-black text-xs flex items-center justify-between">
-                <span>ویرایشگر (editor)</span>
-                <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400">123</span>
-              </div>
-              <div className="text-[10px] text-blue-600 dark:text-blue-400 mt-0.5">
-                ویرایش پرسنل، اکسل و شماره‌ها
-              </div>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

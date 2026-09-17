@@ -3,8 +3,13 @@ import { Employee, DynamicFieldDefinition, Department, Position, LocationItem, P
 import { api } from '../../utils/api.ts';
 import { toPersianDigits, formatPersianDateTime } from '../../utils/shamsi.ts';
 import { formatEmployeeLocation } from '../../utils/location.ts';
+import { getDefaultAvatar, getHighResImageUrl } from '../../utils/image.ts';
+import { calculateProfileCompleteness } from '../../utils/completeness.ts';
 import { MeteorAvatar } from '../MeteorAvatar.tsx';
 import { EmployeeProfileModal } from '../EmployeeProfileModal.tsx';
+import { ProfileCompletenessCircle } from '../ProfileCompletenessCircle.tsx';
+import { AdminCompletenessStats, CompletenessFilterType } from './AdminCompletenessStats.tsx';
+import { AdminArchive } from './AdminArchive.tsx';
 import {
   Plus,
   Edit2,
@@ -32,8 +37,10 @@ import {
   Smartphone,
   Clock,
   ExternalLink,
-  Layers,
-  DoorOpen,
+  Archive,
+  RotateCcw,
+  FolderArchive,
+  HelpCircle,
 } from 'lucide-react';
 
 interface AdminEmployeesProps {
@@ -74,6 +81,16 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [duplicatedNewEmp, setDuplicatedNewEmp] = useState<Employee | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [completenessFilter, setCompletenessFilter] = useState<CompletenessFilterType>('all');
+  const [activeTab, setActiveTab] = useState<'active' | 'archive'>('active');
+  const [archivedCount, setArchivedCount] = useState<number>(0);
+  const [archiveModalEmp, setArchiveModalEmp] = useState<Employee | null>(null);
+  const [archiveReason, setArchiveReason] = useState<string>('');
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [selectedActiveIds, setSelectedActiveIds] = useState<string[]>([]);
+  const [isBatchArchiveModalOpen, setIsBatchArchiveModalOpen] = useState(false);
+  const [batchArchiveReason, setBatchArchiveReason] = useState<string>('');
+
   const [viewMode, setViewMode] = useState<'cards' | 'table'>(() => {
     try {
       return (localStorage.getItem('admin_emp_view_mode') as 'cards' | 'table') || 'cards';
@@ -81,6 +98,19 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
       return 'cards';
     }
   });
+
+  const fetchArchivedCount = async () => {
+    try {
+      const res = await api.getArchivedEmployees();
+      if (Array.isArray(res)) {
+        setArchivedCount(res.length);
+      }
+    } catch (_) {}
+  };
+
+  React.useEffect(() => {
+    fetchArchivedCount();
+  }, [employees]);
 
   const handleSetViewMode = (mode: 'cards' | 'table') => {
     setViewMode(mode);
@@ -133,7 +163,6 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
 
   const openEditModal = (emp: Employee) => {
     setEditingEmp(emp);
-    const loc = locations.find((l) => l.id === emp.location_id);
     setFormData({
       first_name: emp.first_name || '',
       last_name: emp.last_name || '',
@@ -141,9 +170,9 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
       department_id: emp.department_id || '',
       position_id: emp.position_id || '',
       location_id: emp.location_id || '',
-      unit: (emp as any).unit !== undefined ? (emp as any).unit : (loc?.unit || ''),
-      floor: (emp as any).floor !== undefined ? (emp as any).floor : (loc?.floor || ''),
-      room: emp.room !== undefined ? emp.room : (loc?.room || ''),
+      unit: (emp as any).unit || '',
+      floor: (emp as any).floor || '',
+      room: emp.room || '',
       extension: emp.extension || '',
       direct_phone: emp.direct_phone || '',
       mobile: emp.mobile || '',
@@ -156,7 +185,8 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
         ? emp.phones
         : [
             { id: '1', type: 'extension', label: 'داخلی', number: emp.extension || '', primary: true },
-            { id: '2', type: 'mobile', label: 'همراه', number: emp.mobile || '', primary: false },
+            ...(emp.direct_phone ? [{ id: '2', type: 'office', label: 'مستقیم', number: emp.direct_phone, primary: false }] : []),
+            ...(emp.mobile ? [{ id: '3', type: 'mobile', label: 'همراه', number: emp.mobile, primary: false }] : []),
           ]
     );
     setAvatarPreview(emp.avatar || null);
@@ -190,24 +220,36 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
 
     try {
       const selectedLoc = locations.find((l) => l.id === formData.location_id);
+      const activePhones = phonesList.filter((p) => p.number && p.number.trim() !== '');
+
+      const extPhone = activePhones.find((p) => p.type === 'extension');
+      const mobPhone = activePhones.find((p) => p.type === 'mobile');
+      const dirPhone = activePhones.find((p) => p.type === 'office' || p.type === 'direct');
+
+      const fName = (formData.first_name || '').trim();
+      const lName = (formData.last_name || '').trim();
+
       const payload: any = {
-        ...formData,
-        building: selectedLoc ? (selectedLoc.building || selectedLoc.name) : (formData.building || ''),
+        first_name: fName,
+        last_name: lName,
+        full_name: `${fName} ${lName}`.trim(),
+        personnel_code: (formData.personnel_code || '').trim(),
+        department_id: (formData.department_id || '').trim(),
+        position_id: (formData.position_id || '').trim(),
+        location_id: (formData.location_id || '').trim(),
+        building: selectedLoc ? (selectedLoc.building || selectedLoc.name || '').trim() : '',
         unit: (formData.unit || '').trim(),
         floor: (formData.floor || '').trim(),
         room: (formData.room || '').trim(),
+        extension: extPhone ? extPhone.number.trim() : '',
+        direct_phone: dirPhone ? dirPhone.number.trim() : '',
+        mobile: mobPhone ? mobPhone.number.trim() : '',
+        email: (formData.email || '').trim(),
+        notes: (formData.notes || '').trim(),
         avatar: avatarPreview || formData.avatar || '',
-        phones: phonesList.filter((p) => p.number.trim() !== ''),
+        phones: activePhones,
         custom_fields: customFieldsData,
       };
-
-      // Sync direct_phone, mobile, extension from primary phones
-      const extPhone = phonesList.find((p) => p.type === 'extension');
-      if (extPhone && extPhone.number) payload.extension = extPhone.number;
-      const mobPhone = phonesList.find((p) => p.type === 'mobile');
-      if (mobPhone && mobPhone.number) payload.mobile = mobPhone.number;
-      const dirPhone = phonesList.find((p) => p.type === 'office');
-      if (dirPhone && dirPhone.number) payload.direct_phone = dirPhone.number;
 
       if (editingEmp) {
         await api.updateEmployee(editingEmp.id, payload);
@@ -243,20 +285,82 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
     }
   };
 
-  const handleDelete = async (emp: Employee) => {
-    if (!confirm(`آیا از حذف کارمند «${emp.full_name}» اطمینان دارید؟`)) return;
+  const handleDelete = (emp: Employee) => {
+    setArchiveModalEmp(emp);
+    setArchiveReason('انتقال به بایگانی و سطل بازیافت توسط مدیر');
+  };
 
+  const handleArchiveSingle = async () => {
+    if (!archiveModalEmp) return;
     try {
-      await api.deleteEmployee(emp.id);
-      setSuccess(`کارمند «${emp.full_name}» حذف گردید.`);
+      setIsArchiving(true);
+      setError(null);
+      const res = await api.deleteEmployee(archiveModalEmp.id, archiveReason || 'انتقال به بایگانی توسط مدیر');
+      setSuccess(res.message || `کارمند «${archiveModalEmp.full_name}» با موفقیت به سطل بازیافت و آرشیو منتقل گردید.`);
+      setArchiveModalEmp(null);
+      setArchiveReason('');
       onRefresh();
-      setTimeout(() => setSuccess(null), 3000);
+      fetchArchivedCount();
+      setTimeout(() => setSuccess(null), 4000);
     } catch (err: any) {
-      alert(err.message || 'خطا در حذف کارمند');
+      setError(err.message || 'خطا در انتقال کارمند به آرشیو');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleBatchArchive = async () => {
+    if (selectedActiveIds.length === 0) return;
+    try {
+      setIsArchiving(true);
+      setError(null);
+      const res = await api.batchArchiveEmployees(
+        selectedActiveIds,
+        batchArchiveReason || 'انتقال دسته‌جمعی به بایگانی و سطل بازیافت'
+      );
+      setSuccess(res.message || `${toPersianDigits(selectedActiveIds.length)} کارمند به آرشیو منتقل شدند.`);
+      setIsBatchArchiveModalOpen(false);
+      setSelectedActiveIds([]);
+      setBatchArchiveReason('');
+      onRefresh();
+      fetchArchivedCount();
+      setTimeout(() => setSuccess(null), 4000);
+    } catch (err: any) {
+      setError(err.message || 'خطا در انتقال گروهی به آرشیو');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const toggleSelectActive = (id: string) => {
+    setSelectedActiveIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAllFiltered = () => {
+    if (selectedActiveIds.length === filtered.length && filtered.length > 0) {
+      setSelectedActiveIds([]);
+    } else {
+      setSelectedActiveIds(filtered.map((e) => e.id));
     }
   };
 
   const filtered = employees.filter((emp) => {
+    // 1. Completeness Filter
+    if (completenessFilter !== 'all') {
+      const comp = calculateProfileCompleteness(emp, locations);
+      if (completenessFilter === 'complete' && !comp.isComplete) return false;
+      if (completenessFilter === 'partial' && (comp.percentage < 50 || comp.percentage >= 100)) return false;
+      if (completenessFilter === 'incomplete' && comp.percentage >= 50) return false;
+      if (completenessFilter.startsWith('missing:')) {
+        const fieldId = completenessFilter.replace('missing:', '');
+        const item = comp.items.find((it) => it.id === fieldId);
+        if (!item || item.filled) return false;
+      }
+    }
+
+    // 2. Search Term Filter
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
     const deptName = deptMap.get(emp.department_id)?.toLowerCase() || '';
@@ -282,64 +386,193 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top action bar with Search, View Mode, and Add Button */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
-        <div className="relative flex-1 max-w-md">
-          <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-            <Search className="w-4 h-4" />
-          </div>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="جستجو در نام، شماره پرسنلی، داخلی، همراه، ایمیل، اتاق، سمت..."
-            className="w-full pl-3 pr-10 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-          />
+      {/* Top Main Navigation Tabs: Active Employees vs Recycle Bin / Archive */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setActiveTab('active')}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'active'
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+            }`}
+          >
+            <User className="w-4 h-4" />
+            <span>همکاران و پرسنل فعال</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                activeTab === 'active'
+                  ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+              }`}
+            >
+              {toPersianDigits(employees.length)}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('archive')}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'archive'
+                ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+            }`}
+          >
+            <Archive className="w-4 h-4" />
+            <span>بخش آرشیو و سطل بازیافت</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                activeTab === 'archive'
+                  ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300'
+                  : 'bg-amber-100/70 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'
+              }`}
+            >
+              {toPersianDigits(archivedCount)}
+            </span>
+          </button>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3">
-          {/* View Mode Toggle: Cards vs Table */}
-          <div className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700">
-            <button
-              type="button"
-              onClick={() => handleSetViewMode('cards')}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                viewMode === 'cards'
-                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-              title="نمایش تمام اطلاعات پرسنل به صورت کارت‌های کامل و تفصیلی"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>کارت‌های کامل پرسنل</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSetViewMode('table')}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                viewMode === 'table'
-                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-              title="نمایش فهرست به صورت جدول جامع"
-            >
-              <TableIcon className="w-3.5 h-3.5" />
-              <span>جدول تفصیلی</span>
-            </button>
-          </div>
-
-          {/* Add Employee Button */}
+        {activeTab === 'active' && (
           <button
             type="button"
             onClick={openAddModal}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm shadow-indigo-600/20 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>افزودن کارمند جدید</span>
           </button>
-        </div>
+        )}
       </div>
+
+      {/* RENDER ARCHIVE VIEW */}
+      {activeTab === 'archive' ? (
+        <AdminArchive
+          departments={departments}
+          positions={positions}
+          locations={locations}
+          onRefreshAll={() => {
+            onRefresh();
+            fetchArchivedCount();
+          }}
+          onSwitchToActive={() => setActiveTab('active')}
+        />
+      ) : (
+        <>
+          {/* Profile Completeness Statistics Dashboard */}
+          <AdminCompletenessStats
+            employees={employees}
+            locations={locations}
+            activeFilter={completenessFilter}
+            onSelectFilter={setCompletenessFilter}
+            archivedCount={archivedCount}
+            onViewArchive={() => setActiveTab('archive')}
+          />
+
+          {/* Batch Action Toolbar for Active Employees */}
+          {selectedActiveIds.length > 0 && (
+            <div className="p-3 sm:p-4 rounded-2xl bg-indigo-50/90 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs animate-fadeIn">
+              <div className="flex items-center gap-2.5">
+                <span className="font-bold text-indigo-900 dark:text-indigo-200">
+                  {toPersianDigits(selectedActiveIds.length)} پرسنل انتخاب شده است.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedActiveIds([])}
+                  className="text-[11px] text-slate-500 dark:text-slate-400 hover:underline cursor-pointer"
+                >
+                  لغو انتخاب‌ها
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBatchArchiveReason('انتقال دسته‌جمعی به بایگانی و سطل بازیافت');
+                    setIsBatchArchiveModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition-colors cursor-pointer shadow-xs"
+                >
+                  <Archive className="w-3.5 h-3.5" />
+                  <span>انتقال به آرشیو و سطل بازیافت</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Top action bar with Search, View Mode, and Add Button */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+            <div className="relative flex-1 max-w-md">
+              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                <Search className="w-4 h-4" />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="جستجو در نام، شماره پرسنلی، داخلی، همراه، ایمیل، اتاق، سمت..."
+                className="w-full pl-3 pr-10 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3">
+              {/* Select All Filtered Button */}
+              {filtered.length > 0 && (
+                <button
+                  type="button"
+                  onClick={toggleSelectAllFiltered}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                >
+                  {selectedActiveIds.length === filtered.length && filtered.length > 0
+                    ? 'لغو انتخاب همه'
+                    : 'انتخاب همه پرسنل'}
+                </button>
+              )}
+
+              {/* View Mode Toggle: Cards vs Table */}
+              <div className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => handleSetViewMode('cards')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === 'cards'
+                      ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                  title="نمایش تمام اطلاعات پرسنل به صورت کارت‌های کامل و تفصیلی"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>کارت‌های کامل پرسنل</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSetViewMode('table')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === 'table'
+                      ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                  title="نمایش فهرست به صورت جدول جامع"
+                >
+                  <TableIcon className="w-3.5 h-3.5" />
+                  <span>جدول تفصیلی</span>
+                </button>
+              </div>
+
+              {/* Add Employee Button */}
+              <button
+                type="button"
+                onClick={openAddModal}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm shadow-indigo-600/20 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>افزودن کارمند جدید</span>
+              </button>
+            </div>
+          </div>
 
       {/* Counter & Search Summary */}
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs px-1 text-slate-500 dark:text-slate-400">
@@ -393,7 +626,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
 
       {/* ================= VIEW 1: FULL EMPLOYEE CARDS VIEW (ALL CARD INFORMATION IN LIST) ================= */}
       {viewMode === 'cards' && filtered.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
           {filtered.map((emp) => {
             const deptName = deptMap.get(emp.department_id) || '-';
             const posTitle = posMap.get(emp.position_id) || '-';
@@ -405,41 +638,41 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
             return (
               <div
                 key={emp.id}
-                className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group"
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group"
               >
                 {/* 1. Card Top Section: Avatar, Name, Code, Badges & Quick Action Toolbar */}
-                <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/40">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3.5 min-w-0">
+                <div className="p-3 sm:p-3.5 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/40">
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <MeteorAvatar
                         src={emp.avatar}
                         name={emp.full_name || `${emp.first_name} ${emp.last_name}`}
                         alt=""
-                        size="md"
+                        size="sm"
                         shape="circle"
                       />
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <button
                             type="button"
                             onClick={() => setSelectedProfileEmp(emp)}
-                            className="font-black text-sm text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-right cursor-pointer truncate"
+                            className="font-black text-xs sm:text-sm text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-right cursor-pointer truncate"
                             title="مشاهده شناسنامه و تمام اطلاعات فرد"
                           >
                             {emp.full_name}
                           </button>
                           {emp.internal_metadata?.duplicated_from && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 text-[10px] font-bold border border-amber-200/60 dark:border-amber-800/60">
+                            <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 text-[9.5px] font-bold border border-amber-200/60 dark:border-amber-800/60">
                               کارت دوم
                             </span>
                           )}
                         </div>
 
                         {/* Personnel Code with quick copy */}
-                        <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs">
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap text-xs">
                           {emp.personnel_code ? (
-                            <div className="inline-flex items-center gap-1.5 bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-lg font-mono text-[11px] font-bold">
-                              <span className="text-slate-400 text-[10px] font-sans">کد پرسنلی:</span>
+                            <div className="inline-flex items-center gap-1 bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-1.5 py-0.2 rounded-md font-mono text-[10.5px] font-bold">
+                              <span className="text-slate-400 text-[9.5px] font-sans">کد:</span>
                               <span className="text-indigo-600 dark:text-indigo-400">{toPersianDigits(emp.personnel_code)}</span>
                               <button
                                 type="button"
@@ -448,79 +681,87 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                                 className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                               >
                                 {copiedKey === `code-${emp.id}` ? (
-                                  <Check className="w-3 h-3 text-emerald-600" />
+                                  <Check className="w-2.5 h-2.5 text-emerald-600" />
                                 ) : (
-                                  <Copy className="w-3 h-3" />
+                                  <Copy className="w-2.5 h-2.5" />
                                 )}
                               </button>
                             </div>
                           ) : (
-                            <span className="text-[11px] text-slate-400">فاقد شماره پرسنلی</span>
+                            <span className="text-[10.5px] text-slate-400">فاقد شماره پرسنلی</span>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Quick Action Buttons on top right of each card */}
-                    <div className="flex items-center gap-1 shrink-0 bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedProfileEmp(emp)}
-                        className="p-1.5 rounded-xl text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 transition-colors cursor-pointer"
-                        title="مشاهده تمام اطلاعات و شناسنامه فرد"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDuplicate(emp)}
-                        disabled={duplicatingId === emp.id}
-                        className="p-1.5 rounded-xl text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/60 transition-colors cursor-pointer disabled:opacity-50"
-                        title="دوپلیکیت کارت و ایجاد یک کارت جدید با همین مشخصات"
-                      >
-                        {duplicatingId === emp.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(emp)}
-                        className="p-1.5 rounded-xl text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 transition-colors cursor-pointer"
-                        title="ویرایش اطلاعات کارت"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(emp)}
-                        className="p-1.5 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition-colors cursor-pointer"
-                        title="حذف این کارت"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    {/* Quick Action Buttons & Completeness Circle on top right of each card */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <ProfileCompletenessCircle
+                        employee={emp}
+                        locations={locations}
+                        size="sm"
+                        className="shrink-0"
+                      />
+                      <div className="flex items-center gap-0.5 bg-white dark:bg-slate-900 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedProfileEmp(emp)}
+                          className="p-1 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 transition-colors cursor-pointer"
+                          title="مشاهده تمام اطلاعات و شناسنامه فرد"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDuplicate(emp)}
+                          disabled={duplicatingId === emp.id}
+                          className="p-1 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/60 transition-colors cursor-pointer disabled:opacity-50"
+                          title="دوپلیکیت کارت و ایجاد یک کارت جدید با همین مشخصات"
+                        >
+                          {duplicatingId === emp.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(emp)}
+                          className="p-1 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 transition-colors cursor-pointer"
+                          title="ویرایش اطلاعات کارت"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(emp)}
+                          className="p-1 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition-colors cursor-pointer"
+                          title="حذف این کارت"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* 2. Card Body: ALL fields of the employee */}
-                <div className="p-4 sm:p-5 space-y-3.5 text-xs flex-1">
+                <div className="p-3 sm:p-3.5 space-y-2 text-xs flex-1">
                   {/* Department & Position */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-950/50 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-800/80">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Building className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 bg-slate-50 dark:bg-slate-950/50 p-2 rounded-xl border border-slate-100 dark:border-slate-800/80">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Building className="w-3 h-3 text-indigo-500 shrink-0" />
                       <div className="min-w-0">
-                        <span className="text-[10px] text-slate-400 block">واحد</span>
+                        <span className="text-[9.5px] text-slate-400 block">واحد</span>
                         <span className="font-bold text-slate-800 dark:text-slate-200 truncate block" title={deptName}>
                           {deptName}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Briefcase className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Briefcase className="w-3 h-3 text-emerald-500 shrink-0" />
                       <div className="min-w-0">
-                        <span className="text-[10px] text-slate-400 block">سمت</span>
+                        <span className="text-[9.5px] text-slate-400 block">سمت</span>
                         <span className="font-semibold text-slate-700 dark:text-slate-300 truncate block" title={posTitle}>
                           {posTitle}
                         </span>
@@ -529,37 +770,14 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                   </div>
 
                   {/* Physical Location (Building, Floor, Room, Unit) */}
-                  <div className="bg-slate-50 dark:bg-slate-950/50 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-800/80 space-y-1.5">
+                  <div className="bg-slate-50 dark:bg-slate-950/50 p-2 rounded-xl border border-slate-100 dark:border-slate-800/80">
                     <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                      <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                      <span className="font-bold">محل استقرار:</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-medium truncate" title={locFormatted || 'تعیین نشده'}>
+                      <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                      <span className="font-bold text-[11px]">محل استقرار:</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-medium truncate text-[11px]" title={locFormatted || 'تعیین نشده'}>
                         {locFormatted || 'تعیین نشده'}
                       </span>
                     </div>
-
-                    {(emp.floor || emp.room || emp.unit) && (
-                      <div className="flex flex-wrap items-center gap-2 pr-5 text-[11px] text-slate-500 dark:text-slate-400">
-                        {emp.floor && (
-                          <span className="inline-flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-800">
-                            <Layers className="w-3 h-3 text-slate-400" />
-                            <span>طبقه: {toPersianDigits(emp.floor)}</span>
-                          </span>
-                        )}
-                        {emp.room && (
-                          <span className="inline-flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-800">
-                            <DoorOpen className="w-3 h-3 text-slate-400" />
-                            <span>اتاق: {toPersianDigits(emp.room)}</span>
-                          </span>
-                        )}
-                        {emp.unit && (
-                          <span className="inline-flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-800">
-                            <Building className="w-3 h-3 text-slate-400" />
-                            <span>واحد: {toPersianDigits(emp.unit)}</span>
-                          </span>
-                        )}
-                      </div>
-                    )}
                   </div>
 
                   {/* Contact Numbers: Extension, Direct, Mobile */}
@@ -616,21 +834,21 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                     );
 
                     return (
-                      <div className="space-y-2">
-                        <span className="text-[10px] font-bold text-slate-400 block">خطوط تماس و ارتباطی:</span>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="space-y-1.5">
+                        <span className="text-[9.5px] font-bold text-slate-400 block">خطوط تماس و ارتباطی:</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
                           {/* شماره داخلی */}
-                          <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/60 rounded-xl p-2.5 flex flex-col justify-between min-h-[68px]">
-                            <div className="text-[10px] text-indigo-700 dark:text-indigo-300 font-bold mb-1.5 pb-1 border-b border-indigo-200/50 dark:border-indigo-800/50">
+                          <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/60 rounded-xl p-2 flex flex-col justify-between min-h-[58px]">
+                            <div className="text-[9.5px] text-indigo-700 dark:text-indigo-300 font-bold mb-1 pb-0.5 border-b border-indigo-200/50 dark:border-indigo-800/50">
                               <span>شماره داخلی</span>
                             </div>
-                            <div className="space-y-1.5">
+                            <div className="space-y-1">
                               {extensions.length > 0 ? (
                                 extensions.map((ext, extIdx) => (
                                   <div key={extIdx} className="flex items-center justify-between gap-1">
                                     <a
                                       href={`tel:${ext}`}
-                                      className="font-mono font-black text-sm text-indigo-900 dark:text-indigo-200 hover:underline"
+                                      className="font-mono font-black text-xs text-indigo-900 dark:text-indigo-200 hover:underline"
                                     >
                                       {toPersianDigits(ext)}
                                     </a>
@@ -641,31 +859,31 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                                       title="کپی شماره داخلی"
                                     >
                                       {copiedKey === `ext-${emp.id}-${extIdx}` ? (
-                                        <Check className="w-3 h-3 text-emerald-600" />
+                                        <Check className="w-2.5 h-2.5 text-emerald-600" />
                                       ) : (
-                                        <Copy className="w-3 h-3" />
+                                        <Copy className="w-2.5 h-2.5" />
                                       )}
                                     </button>
                                   </div>
                                 ))
                               ) : (
-                                <span className="text-slate-400 font-normal text-xs">-</span>
+                                <span className="text-slate-400 font-normal text-[11px]">-</span>
                               )}
                             </div>
                           </div>
 
                           {/* خط مستقیم */}
-                          <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 rounded-xl p-2.5 flex flex-col justify-between min-h-[68px]">
-                            <div className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold mb-1.5 pb-1 border-b border-emerald-200/50 dark:border-emerald-800/50">
+                          <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 rounded-xl p-2 flex flex-col justify-between min-h-[58px]">
+                            <div className="text-[9.5px] text-emerald-700 dark:text-emerald-300 font-bold mb-1 pb-0.5 border-b border-emerald-200/50 dark:border-emerald-800/50">
                               <span>خط مستقیم</span>
                             </div>
-                            <div className="space-y-1.5">
+                            <div className="space-y-1">
                               {directPhones.length > 0 ? (
                                 directPhones.map((dir, dirIdx) => (
                                   <div key={dirIdx} className="flex items-center justify-between gap-1">
                                     <a
                                       href={`tel:${dir}`}
-                                      className="font-mono font-bold text-xs text-emerald-900 dark:text-emerald-200 hover:underline truncate"
+                                      className="font-mono font-bold text-[11px] text-emerald-900 dark:text-emerald-200 hover:underline truncate"
                                       dir="ltr"
                                     >
                                       {toPersianDigits(dir)}
@@ -677,31 +895,31 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                                       title="کپی شماره مستقیم"
                                     >
                                       {copiedKey === `dir-${emp.id}-${dirIdx}` ? (
-                                        <Check className="w-3 h-3 text-emerald-600" />
+                                        <Check className="w-2.5 h-2.5 text-emerald-600" />
                                       ) : (
-                                        <Copy className="w-3 h-3" />
+                                        <Copy className="w-2.5 h-2.5" />
                                       )}
                                     </button>
                                   </div>
                                 ))
                               ) : (
-                                <span className="text-slate-400 font-normal text-xs">-</span>
+                                <span className="text-slate-400 font-normal text-[11px]">-</span>
                               )}
                             </div>
                           </div>
 
                           {/* تلفن همراه */}
-                          <div className="bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/60 rounded-xl p-2.5 flex flex-col justify-between min-h-[68px]">
-                            <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold mb-1.5 pb-1 border-b border-amber-200/50 dark:border-amber-800/50">
+                          <div className="bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/60 rounded-xl p-2 flex flex-col justify-between min-h-[58px]">
+                            <div className="text-[9.5px] text-amber-700 dark:text-amber-300 font-bold mb-1 pb-0.5 border-b border-amber-200/50 dark:border-amber-800/50">
                               <span>تلفن همراه</span>
                             </div>
-                            <div className="space-y-1.5">
+                            <div className="space-y-1">
                               {mobiles.length > 0 ? (
                                 mobiles.map((mob, mobIdx) => (
                                   <div key={mobIdx} className="flex items-center justify-between gap-1">
                                     <a
                                       href={`tel:${mob}`}
-                                      className="font-mono font-bold text-xs text-amber-900 dark:text-amber-200 hover:underline truncate"
+                                      className="font-mono font-bold text-[11px] text-amber-900 dark:text-amber-200 hover:underline truncate"
                                       dir="ltr"
                                     >
                                       {toPersianDigits(mob)}
@@ -713,15 +931,15 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                                       title="کپی تلفن همراه"
                                     >
                                       {copiedKey === `mob-${emp.id}-${mobIdx}` ? (
-                                        <Check className="w-3 h-3 text-emerald-600" />
+                                        <Check className="w-2.5 h-2.5 text-emerald-600" />
                                       ) : (
-                                        <Copy className="w-3 h-3" />
+                                        <Copy className="w-2.5 h-2.5" />
                                       )}
                                     </button>
                                   </div>
                                 ))
                               ) : (
-                                <span className="text-slate-400 font-normal text-xs">-</span>
+                                <span className="text-slate-400 font-normal text-[11px]">-</span>
                               )}
                             </div>
                           </div>
@@ -766,17 +984,17 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
 
                         {/* Email - If more than one, listed one under another in the same box */}
                         {emails.length > 0 && (
-                          <div className="p-2.5 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center gap-1.5 mb-1.5 text-slate-400 text-[11px]">
-                              <Mail className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+                          <div className="p-2 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <div className="flex items-center gap-1.5 mb-1 text-slate-400 text-[10.5px]">
+                              <Mail className="w-3 h-3 text-sky-500 shrink-0" />
                               <span>ایمیل:</span>
                             </div>
-                            <div className="space-y-1.5">
+                            <div className="space-y-1">
                               {emails.map((eml, emlIdx) => (
-                                <div key={emlIdx} className="flex items-center justify-between gap-2">
+                                <div key={emlIdx} className="flex items-center justify-between gap-1.5">
                                   <a
                                     href={`mailto:${eml}`}
-                                    className="text-sky-600 dark:text-sky-400 hover:underline font-mono truncate text-xs"
+                                    className="text-sky-600 dark:text-sky-400 hover:underline font-mono truncate text-[11px]"
                                     dir="ltr"
                                   >
                                     {eml}
@@ -784,13 +1002,13 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                                   <button
                                     type="button"
                                     onClick={(e) => handleCopy(e, eml, `eml-${emp.id}-${emlIdx}`)}
-                                    className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
+                                    className="p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
                                     title="کپی آدرس ایمیل"
                                   >
                                     {copiedKey === `eml-${emp.id}-${emlIdx}` ? (
-                                      <Check className="w-3 h-3 text-emerald-600" />
+                                      <Check className="w-2.5 h-2.5 text-emerald-600" />
                                     ) : (
-                                      <Copy className="w-3 h-3" />
+                                      <Copy className="w-2.5 h-2.5" />
                                     )}
                                   </button>
                                 </div>
@@ -804,13 +1022,13 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
 
                   {/* Notes / Descriptions */}
                   {emp.notes && (
-                    <div className="p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 flex items-start gap-2">
-                      <FileText className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                    <div className="p-2 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 flex items-start gap-1.5">
+                      <FileText className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
                       <div className="min-w-0 flex-1">
-                        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 block mb-0.5">
+                        <span className="text-[9.5px] font-bold text-amber-700 dark:text-amber-300 block mb-0.5">
                           توضیحات و یادداشت:
                         </span>
-                        <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed break-words">
+                        <p className="text-slate-600 dark:text-slate-400 text-[10.5px] leading-relaxed break-words">
                           {emp.notes}
                         </p>
                       </div>
@@ -819,18 +1037,18 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
 
                   {/* Dynamic Custom Fields */}
                   {customEntries.length > 0 && (
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                      <span className="text-[10px] font-bold text-slate-400 block mb-1.5">
+                    <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
+                      <span className="text-[9.5px] font-bold text-slate-400 block mb-1">
                         فیلدهای تکمیلی و اختصاصی:
                       </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                         {customEntries.map(([ck, cv]) => {
                           const fDef = fields.find((f) => f.internal_name === ck);
                           const clabel = fDef ? fDef.persian_label : ck;
                           return (
                             <div
                               key={ck}
-                              className="bg-slate-50 dark:bg-slate-950/40 p-1.5 px-2.5 rounded-lg border border-slate-200/50 dark:border-slate-800 text-[11px] flex items-center justify-between gap-1"
+                              className="bg-slate-50 dark:bg-slate-950/40 p-1 px-2 rounded-lg border border-slate-200/50 dark:border-slate-800 text-[10.5px] flex items-center justify-between gap-1"
                             >
                               <span className="text-slate-500 dark:text-slate-400">{clabel}:</span>
                               <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">
@@ -845,7 +1063,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                 </div>
 
                 {/* 3. Card Footer Metadata */}
-                <div className="p-3 px-4 sm:px-5 bg-slate-50/70 dark:bg-slate-950/70 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between text-[10px] text-slate-400 gap-2">
+                <div className="py-2 px-3 sm:px-4 bg-slate-50/70 dark:bg-slate-950/70 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between text-[9.5px] text-slate-400 gap-1.5">
                   <span>شناسه: {emp.id}</span>
                   <span>آخرین به‌روزرسانی: {formatPersianDateTime(emp.updated_at)}</span>
                   <span>دفعات جستجو: {toPersianDigits(emp.search_count || 0)}</span>
@@ -858,19 +1076,20 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
 
       {/* ================= VIEW 2: COMPREHENSIVE DETAILED TABLE VIEW ================= */}
       {viewMode === 'table' && filtered.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-right border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold">
-                  <th className="py-3 px-3.5">تصویر</th>
-                  <th className="py-3 px-3.5">نام و نام خانوادگی</th>
-                  <th className="py-3 px-3.5">شماره پرسنلی</th>
-                  <th className="py-3 px-3.5">واحد و سمت</th>
-                  <th className="py-3 px-3.5 text-center">داخلی</th>
-                  <th className="py-3 px-3.5 text-center">تلفن مستقیم</th>
-                  <th className="py-3 px-3.5 text-center">همراه</th>
-                  <th className="py-3 px-3.5 text-center">عملیات</th>
+                  <th className="py-2 px-2.5">تصویر</th>
+                  <th className="py-2 px-2.5">نام و نام خانوادگی</th>
+                  <th className="py-2 px-2.5">شماره پرسنلی</th>
+                  <th className="py-2 px-2.5">واحد و سمت</th>
+                  <th className="py-2 px-2.5 text-center">تکمیل پرونده</th>
+                  <th className="py-2 px-2.5 text-center">داخلی</th>
+                  <th className="py-2 px-2.5 text-center">تلفن مستقیم</th>
+                  <th className="py-2 px-2.5 text-center">همراه</th>
+                  <th className="py-2 px-2.5 text-center">عملیات</th>
                 </tr>
               </thead>
               {filtered.map((emp) => {
@@ -888,7 +1107,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                   >
                     {/* Row 1: Primary identifiers & core phones */}
                     <tr>
-                      <td className="py-2.5 px-3.5">
+                      <td className="py-1.5 px-2.5">
                         <MeteorAvatar
                           src={emp.avatar}
                           name={emp.full_name || `${emp.first_name} ${emp.last_name}`}
@@ -897,7 +1116,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                           shape="circle"
                         />
                       </td>
-                      <td className="py-2.5 px-3.5">
+                      <td className="py-1.5 px-2.5">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <button
                             type="button"
@@ -908,22 +1127,25 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                             {emp.full_name}
                           </button>
                           {emp.internal_metadata?.duplicated_from && (
-                            <span className="px-1.5 py-0.2 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-[10px] font-bold">
+                            <span className="px-1.5 py-0.2 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-[9.5px] font-bold">
                               دوبل
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="py-2.5 px-3.5 font-mono text-indigo-600 dark:text-indigo-400 font-bold">
+                      <td className="py-1.5 px-2.5 font-mono text-indigo-600 dark:text-indigo-400 font-bold">
                         {toPersianDigits(emp.personnel_code || '-')}
                       </td>
-                      <td className="py-2.5 px-3.5 text-slate-700 dark:text-slate-300">
+                      <td className="py-1.5 px-2.5 text-slate-700 dark:text-slate-300">
                         <div className="flex flex-col gap-0.5">
                           <span className="font-semibold text-slate-800 dark:text-slate-200">{deptName}</span>
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400">{posTitle}</span>
+                          <span className="text-[10.5px] text-slate-500 dark:text-slate-400">{posTitle}</span>
                         </div>
                       </td>
-                      <td className="py-2.5 px-3.5 font-mono font-bold text-center">
+                      <td className="py-1.5 px-2.5 text-center">
+                        <ProfileCompletenessCircle employee={emp} locations={locations} size="sm" />
+                      </td>
+                      <td className="py-1.5 px-2.5 font-mono font-bold text-center">
                         {(() => {
                           const exts = Array.from(
                             new Set(
@@ -936,7 +1158,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                             )
                           );
                           return exts.length > 0 ? (
-                            <div className="flex flex-col items-center gap-1">
+                            <div className="flex flex-col items-center gap-0.5">
                               {exts.map((x, xi) => (
                                 <span key={xi}>{toPersianDigits(x)}</span>
                               ))}
@@ -946,7 +1168,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                           );
                         })()}
                       </td>
-                      <td className="py-2.5 px-3.5 font-mono text-center">
+                      <td className="py-1.5 px-2.5 font-mono text-center">
                         {(() => {
                           const dirs = Array.from(
                             new Set(
@@ -959,7 +1181,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                             )
                           );
                           return dirs.length > 0 ? (
-                            <div className="flex flex-col items-center gap-1" dir="ltr">
+                            <div className="flex flex-col items-center gap-0.5" dir="ltr">
                               {dirs.map((x, xi) => (
                                 <span key={xi}>{toPersianDigits(x)}</span>
                               ))}
@@ -969,7 +1191,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                           );
                         })()}
                       </td>
-                      <td className="py-2.5 px-3.5 font-mono text-center text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <td className="py-1.5 px-2.5 font-mono text-center text-emerald-600 dark:text-emerald-400 font-semibold">
                         {(() => {
                           const mobs = Array.from(
                             new Set(
@@ -982,7 +1204,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                             )
                           );
                           return mobs.length > 0 ? (
-                            <div className="flex flex-col items-center gap-1" dir="ltr">
+                            <div className="flex flex-col items-center gap-0.5" dir="ltr">
                               {mobs.map((x, xi) => (
                                 <span key={xi}>{toPersianDigits(x)}</span>
                               ))}
@@ -992,12 +1214,12 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                           );
                         })()}
                       </td>
-                      <td className="py-2.5 px-3.5 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
+                      <td className="py-1.5 px-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1">
                           <button
                             type="button"
                             onClick={() => setSelectedProfileEmp(emp)}
-                            className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer"
+                            className="p-1 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer"
                             title="مشاهده تمام اطلاعات فرد"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -1006,7 +1228,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                             type="button"
                             onClick={() => handleDuplicate(emp)}
                             disabled={duplicatingId === emp.id}
-                            className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-colors cursor-pointer disabled:opacity-50"
+                            className="p-1 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-colors cursor-pointer disabled:opacity-50"
                             title="دوپلیکیت و ایجاد خودکار کارت دوم با اطلاعات مشابه"
                           >
                             {duplicatingId === emp.id ? (
@@ -1018,7 +1240,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                           <button
                             type="button"
                             onClick={() => openEditModal(emp)}
-                            className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors cursor-pointer"
+                            className="p-1 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors cursor-pointer"
                             title="ویرایش"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -1026,7 +1248,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                           <button
                             type="button"
                             onClick={() => handleDelete(emp)}
-                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
+                            className="p-1 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
                             title="حذف"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1036,19 +1258,14 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                     </tr>
 
                     {/* Row 2: Comprehensive individual details */}
-                    <tr className="bg-slate-50/40 dark:bg-slate-950/30 text-[11px] text-slate-600 dark:text-slate-400">
-                      <td colSpan={8} className="py-2.5 px-3.5">
-                        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+                    <tr className="bg-slate-50/40 dark:bg-slate-950/30 text-[10.5px] text-slate-600 dark:text-slate-400">
+                      <td colSpan={9} className="py-1.5 px-2.5">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                           {/* محل استقرار و مشخصات مکانی */}
                           <div className="flex items-center gap-1">
                             <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                             <span className="font-semibold text-slate-700 dark:text-slate-300">محل استقرار:</span>
                             <span>{locFormatted || 'تعیین نشده'}</span>
-                            {(emp.floor || emp.room) && (
-                              <span className="text-slate-400">
-                                ({[emp.floor && `طبقه ${toPersianDigits(emp.floor)}`, emp.room && `اتاق ${toPersianDigits(emp.room)}`].filter(Boolean).join(' - ')})
-                              </span>
-                            )}
                           </div>
 
                           {/* ایمیل */}
@@ -1131,16 +1348,32 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
             dir="rtl"
           >
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-6">
-              <h3 className="text-base font-black text-slate-900 dark:text-white">
-                {editingEmp ? `ویرایش اطلاعات: ${editingEmp.full_name}` : 'افزودن کارمند جدید به سامانه'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-3">
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  {editingEmp ? `ویرایش اطلاعات: ${editingEmp.full_name}` : 'افزودن کارمند جدید به سامانه'}
+                </h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <ProfileCompletenessCircle
+                  employee={{
+                    ...formData,
+                    phones: phonesList.filter((p) => p.number && p.number.trim() !== ''),
+                    extension: phonesList.find((p) => p.type === 'extension' && p.number.trim())?.number || '',
+                    direct_phone: phonesList.find((p) => (p.type === 'office' || p.type === 'direct') && p.number.trim())?.number || '',
+                    building: locations.find((l) => l.id === formData.location_id)?.building || (formData.location_id ? 'selected' : ''),
+                  }}
+                  locations={locations}
+                  size="sm"
+                  showLabel={true}
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {error && (
@@ -1154,28 +1387,78 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
               {/* Avatar Upload */}
               <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800">
                 {avatarPreview ? (
-                  <img
-                    src={avatarPreview}
-                    alt="تصویر کارمند"
-                    className="w-16 h-16 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
-                  />
+                  <div className="relative group shrink-0">
+                    <img
+                      src={avatarPreview}
+                      alt="تصویر پرسنلی"
+                      className="w-16 h-16 rounded-2xl object-cover border-2 border-indigo-500 shadow-sm"
+                    />
+                  </div>
+                ) : getDefaultAvatar() ? (
+                  <div className="relative group shrink-0" title="تصویر پیش‌فرض سازمان">
+                    <img
+                      src={getHighResImageUrl(getDefaultAvatar())}
+                      alt="تصویر پیش‌فرض سازمان"
+                      className="w-16 h-16 rounded-2xl object-cover border border-slate-300 dark:border-slate-700 opacity-80"
+                    />
+                    <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 bg-slate-800 text-[9px] text-white font-bold rounded-md">
+                      پیش‌فرض
+                    </div>
+                  </div>
                 ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-400 text-xl font-bold">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xl shadow-sm shrink-0">
                     👤
                   </div>
                 )}
-                <div>
-                  <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 cursor-pointer shadow-2xs">
-                    <Upload className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>بارگذاری تصویر پرسنلی</span>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={handleAvatarUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  <p className="text-[10px] text-slate-400 mt-1">فرمت‌های JPG, PNG, WEBP (حداکثر ۲ مگابایت)</p>
+
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 cursor-pointer shadow-2xs">
+                      <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>{avatarPreview ? 'تغییر تصویر پرسنلی' : 'بارگذاری تصویر پرسنلی'}</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {avatarPreview && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAvatarPreview(null);
+                          setFormData((prev) => ({ ...prev, avatar: '' }));
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer transition-colors"
+                        title="حذف عکس اختصاصی و استفاده از تصویر پیش‌فرض سازمان"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>حذف عکس</span>
+                      </button>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5 leading-relaxed pt-1">
+                    <div className="flex items-center gap-1.5 font-medium">
+                      <span className="text-slate-700 dark:text-slate-300 font-bold">رزولوشن پیشنهادی:</span>
+                      <span className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">600×600</span>
+                      <span>تا</span>
+                      <span className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">800×800</span>
+                      <span>پیکسل مربعی (حداقل 400×400 جهت جلوگیری از تاری در زوم)</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-700 dark:text-slate-300 font-bold">فرمت‌های مجاز:</span>
+                      <span className="font-medium mr-1">JPG، PNG، WEBP (حداکثر ۲۰ مگابایت)</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 pt-0.5">
+                      {avatarPreview
+                        ? 'تصویر اختصاصی برای این کارمند تنظیم شده است.'
+                        : getDefaultAvatar()
+                        ? 'در صورت عدم بارگذاری، تصویر پیش‌فرض سازمان برای این همکار اعمال می‌شود.'
+                        : 'در صورت عدم بارگذاری، نماد حروف نام نمایش داده می‌شود.'}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -1362,7 +1645,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                       type="text"
                       value={formData.unit || ''}
                       onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                      placeholder="مثال: ۱۰۱ یا واحد اداری"
+                      placeholder="مثال: ۵۰۱ (۳ رقمی)"
                       className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20"
                     />
                   </div>
@@ -1388,7 +1671,7 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
                       type="text"
                       value={formData.room || ''}
                       onChange={(e) => setFormData({ ...formData, room: e.target.value })}
-                      placeholder="مثال: ۲۰۴ یا مدیریت"
+                      placeholder="مثال: ۱۲ (۲ رقمی)"
                       className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20"
                     />
                   </div>
@@ -1535,6 +1818,191 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
           }}
         />
       )}
-    </div>
-  );
+
+      {/* Single Employee Archive Confirmation Modal */}
+      {archiveModalEmp && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div
+            className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 p-6"
+            dir="rtl"
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
+              <div className="flex items-center gap-2.5 text-amber-600 dark:text-amber-400">
+                <div className="w-9 h-9 rounded-2xl bg-amber-50 dark:bg-amber-950/80 flex items-center justify-center border border-amber-200/60 dark:border-amber-800/60">
+                  <Archive className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                    انتقال به بایگانی و سطل بازیافت
+                  </h3>
+                  <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+                    قابلیت بازیابی مجدد در هر زمان
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setArchiveModalEmp(null)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800 flex items-center gap-3">
+                <MeteorAvatar
+                  src={archiveModalEmp.avatar}
+                  name={archiveModalEmp.full_name}
+                  alt=""
+                  size="sm"
+                  shape="circle"
+                />
+                <div className="min-w-0 flex-1 text-xs">
+                  <div className="font-bold text-slate-900 dark:text-white truncate">
+                    {archiveModalEmp.full_name}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2">
+                    {archiveModalEmp.personnel_code && (
+                      <span>کد: {toPersianDigits(archiveModalEmp.personnel_code)}</span>
+                    )}
+                    {archiveModalEmp.extension && (
+                      <span>داخلی: {toPersianDigits(archiveModalEmp.extension)}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-amber-50/50 dark:bg-amber-950/30 p-3 rounded-2xl border border-amber-200/50 dark:border-amber-900/40">
+                این پرونده از دید عمومی و صفحه اصلی سامانه حذف شده و در بخش «آرشیو و سطل بازیافت» نگهداری می‌شود. همچنین در فایل پشتیبان هفتگی نیز محفوظ خواهد ماند.
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  دلیل انتقال به آرشیو (اختیاری):
+                </label>
+                <input
+                  type="text"
+                  value={archiveReason}
+                  onChange={(e) => setArchiveReason(e.target.value)}
+                  placeholder="مثال: پایان قرارداد، تغییر سمت یا خروج از شرکت..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setArchiveModalEmp(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  انصراف
+                </button>
+                <button
+                  type="button"
+                  onClick={handleArchiveSingle}
+                  disabled={isArchiving}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-sm shadow-amber-600/20 disabled:opacity-50 cursor-pointer transition-colors"
+                >
+                  {isArchiving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>در حال انتقال...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Archive className="w-3.5 h-3.5" />
+                      <span>انتقال به آرشیو و بازیافت</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Archive Confirmation Modal */}
+      {isBatchArchiveModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div
+            className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 p-6"
+            dir="rtl"
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
+              <div className="flex items-center gap-2.5 text-amber-600 dark:text-amber-400">
+                <div className="w-9 h-9 rounded-2xl bg-amber-50 dark:bg-amber-950/80 flex items-center justify-center border border-amber-200/60 dark:border-amber-800/60">
+                  <Archive className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                    انتقال دسته‌جمعی به آرشیو
+                  </h3>
+                  <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+                    {toPersianDigits(selectedActiveIds.length)} پرونده انتخاب شده
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBatchArchiveModalOpen(false)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-amber-50/50 dark:bg-amber-950/30 p-3 rounded-2xl border border-amber-200/50 dark:border-amber-900/40">
+                آیا از انتقال تمام {toPersianDigits(selectedActiveIds.length)} پرونده انتخاب‌شده به سطل بازیافت و آرشیو اطمینان دارید؟ این افراد دیگر در صفحه اصلی نمایش داده نخواهند شد.
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  دلیل انتقال گروهی (اختیاری):
+                </label>
+                <input
+                  type="text"
+                  value={batchArchiveReason}
+                  onChange={(e) => setBatchArchiveReason(e.target.value)}
+                  placeholder="مثال: بایگانی دوره‌ای پرسنل غیرفعال..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsBatchArchiveModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  انصراف
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBatchArchive}
+                  disabled={isArchiving}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-sm shadow-amber-600/20 disabled:opacity-50 cursor-pointer transition-colors"
+                >
+                  {isArchiving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>در حال انتقال...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Archive className="w-3.5 h-3.5" />
+                      <span>انتقال {toPersianDigits(selectedActiveIds.length)} نفر به آرشیو</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )}
+</div>
+);
 };

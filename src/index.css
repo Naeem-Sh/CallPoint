@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "vazirmatn/Vazirmatn-font-face.css";
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap');
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -108,40 +109,49 @@ img {
     print-color-adjust: exact !important;
   }
 
-  /* Hide all app chrome, headers, navigation, footers, and modal overlays */
+  /* Base clean print environment */
+  html,
   body {
     background: #ffffff !important;
     color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  body * {
-    visibility: hidden;
-  }
-
-  #printable-directory-sheet,
-  #printable-directory-sheet * {
-    visibility: visible;
-  }
-
-  #printable-directory-sheet {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 4mm 6mm !important;
-    box-shadow: none !important;
-    border: none !important;
+  #root,
+  #root > div {
     background: #ffffff !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
-  @page {
-    margin: 5mm;
+  /* When directory modal is active, hide everything outside the modal */
+  body.print-directory-active #app-main-shell,
+  body.print-directory-active > #root > div > *:not(#printable-directory-modal-root) {
+    display: none !important;
+  }
+
+  /* Generic print hidden utilities */
+  .print-hidden,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* When printing an employee profile card */
+  body:has(#employee-profile-modal-root) #app-main-shell {
+    display: none !important;
+  }
+  #employee-profile-modal-root {
+    position: static !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 }
 

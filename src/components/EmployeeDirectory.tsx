@@ -3,6 +3,7 @@ import { Employee, DynamicFieldDefinition, Department, Position, LocationItem } 
 import { toPersianDigits, formatPersianDateTime } from '../utils/shamsi.ts';
 import { formatEmployeeLocation } from '../utils/location.ts';
 import { MeteorAvatar } from './MeteorAvatar.tsx';
+import { AnimatedCounter } from './common/AnimatedCounter.tsx';
 import {
   Phone,
   Mail,
@@ -275,47 +276,48 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
   };
 
   return (
-    <section className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden mb-8">
+    <section id="employee-directory-section" className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden mb-4 scroll-mt-20">
       {/* Header Bar */}
-      <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-50/50 to-white dark:from-slate-900/50 dark:to-slate-900">
+      <div className="px-3.5 py-2.5 sm:px-4 sm:py-3 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 bg-gradient-to-r from-slate-50/50 to-white dark:from-slate-900/50 dark:to-slate-900">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
               فهرست کارکنان
             </h2>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
-              {toPersianDigits(employees.length)} نفر
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 flex items-center gap-1">
+              <AnimatedCounter value={employees.length} />
+              <span>نفر</span>
             </span>
           </div>
         </div>
 
         {/* Actions & View Mode Switcher */}
-        <div className="flex flex-wrap items-center gap-2.5 self-stretch sm:self-auto justify-end">
+        <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto justify-end">
           {/* View Mode Switcher: Cards vs Table */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
             <button
               type="button"
               onClick={() => handleViewModeChange('cards')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 viewMode === 'cards'
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              <span>نمایش کارتی</span>
+              <span>کارت</span>
             </button>
             <button
               type="button"
               onClick={() => handleViewModeChange('table')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 viewMode === 'table'
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <List className="w-3.5 h-3.5" />
-              <span>نمایش جدولی</span>
+              <span>جدول</span>
             </button>
           </div>
         </div>
@@ -323,21 +325,21 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
 
       {/* Loading state */}
       {loading ? (
-        <div className="p-12 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center gap-3">
-          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm font-medium">در حال دریافت فهرست کارکنان...</span>
+        <div className="p-8 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center gap-2">
+          <div className="w-7 h-7 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-medium">بارگذاری...</span>
         </div>
       ) : employees.length === 0 ? (
-        <div className="p-12 text-center text-slate-500 dark:text-slate-400">
-          <User className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+        <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+          <User className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
           <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-            هیچ رکوردی مطابق با فیلترها و جستجوی شما یافت نشد.
+            موردی یافت نشد.
           </p>
-          <p className="text-xs text-slate-400 mt-1">عبارت جستجو یا فیلترهای اعمال‌شده را تغییر دهید.</p>
+          <p className="text-xs text-slate-400 mt-1">فیلترها یا عبارت جستجو را تغییر دهید.</p>
         </div>
       ) : viewMode === 'cards' ? (
         /* ================= CARDS VIEW ================= */
-        <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="p-2.5 sm:p-3.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
           {employees.map((emp) => {
             const dept = deptMap.get(emp.department_id);
             const posTitle = posMap.get(emp.position_id) || '-';
@@ -347,41 +349,41 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
               <div
                 key={emp.id}
                 onClick={() => onSelectEmployee(emp)}
-                className="bg-white dark:bg-slate-950/70 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 p-4 hover:shadow-lg hover:border-indigo-400 dark:hover:border-indigo-600 transition-all flex flex-col justify-between group cursor-pointer relative"
+                className="bg-white dark:bg-slate-950/70 rounded-xl border border-slate-200/90 dark:border-slate-800/90 p-3 hover:shadow-md hover:border-indigo-400 dark:hover:border-indigo-600 transition-all flex flex-col justify-between group cursor-pointer relative"
               >
                 {/* Top Accent Line */}
-                <div className="absolute top-0 inset-x-0 h-1 rounded-t-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 opacity-70 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute top-0 inset-x-0 h-0.5 rounded-t-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 opacity-70 group-hover:opacity-100 transition-opacity" />
 
                 <div>
                   {/* Top row: Avatar + Name + Personnel Code */}
-                  <div className="flex items-start gap-3 mb-3">
+                  <div className="flex items-start gap-2.5 mb-2">
                     <MeteorAvatar
                       src={emp.avatar}
                       name={emp.full_name || `${emp.first_name} ${emp.last_name}`}
                       alt={emp.full_name}
-                      size="md"
+                      size="sm"
                       shape="rounded"
                     />
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1.5">
-                        <h3 className="font-bold text-slate-900 dark:text-white text-sm truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        <h3 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                           {emp.full_name || `${emp.first_name} ${emp.last_name}`}
                         </h3>
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold shrink-0">
+                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold shrink-0">
                           {toPersianDigits(emp.personnel_code)}
                         </span>
                       </div>
 
-                      <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium truncate mt-0.5">
+                      <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium truncate mt-0.5">
                         {posTitle}
                       </div>
                     </div>
                   </div>
 
                   {/* Department Badge */}
-                  <div className="mb-2.5">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 truncate max-w-full">
+                  <div className="mb-1.5">
+                    <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 truncate max-w-full">
                       <Building className="w-3 h-3 text-indigo-500 shrink-0" />
                       <span className="truncate">{dept ? dept.name : '-'}</span>
                     </span>
@@ -390,10 +392,10 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                   {/* Room and Location info if available */}
                   {formattedLocation && (
                     <div
-                      className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-1.5"
+                      className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5"
                       title={formattedLocation}
                     >
-                      <MapPin className="w-3.5 h-3.5 text-rose-500/80 dark:text-rose-400/80 shrink-0" />
+                      <MapPin className="w-3 h-3 text-rose-500/80 dark:text-rose-400/80 shrink-0" />
                       <span className="truncate">{formattedLocation}</span>
                     </div>
                   )}
@@ -444,24 +446,24 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                     );
 
                     return (
-                      <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+                      <div className="space-y-1 pt-1.5 border-t border-slate-100 dark:border-slate-800/80 text-xs">
                         {/* Internal Extensions */}
                         {extensions.length > 0 && (
-                          <div className="p-2 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100/80 dark:border-indigo-900/50 space-y-1.5">
-                            <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                          <div className="p-1.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100/80 dark:border-indigo-900/50 space-y-1">
+                            <div className="flex items-center justify-between text-[10.5px] font-bold text-slate-600 dark:text-slate-300">
                               <span className="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300">
-                                <Phone className="w-3.5 h-3.5 text-indigo-500" />
+                                <Phone className="w-3 h-3 text-indigo-500" />
                                 <span>داخلی</span>
                               </span>
                             </div>
-                            <div className="flex flex-col gap-1.5">
+                            <div className="flex flex-col gap-1">
                               {extensions.map((ext, i) => (
                                 <div
                                   key={i}
-                                  className="flex items-center justify-between px-2 py-1 rounded-lg bg-white dark:bg-slate-900 border border-indigo-200/70 dark:border-indigo-800/70 shadow-2xs"
+                                  className="flex items-center justify-between px-1.5 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-indigo-200/70 dark:border-indigo-800/70 shadow-2xs"
                                 >
                                   <div className="flex items-center gap-1.5">
-                                    <Phone className="w-3 h-3 text-indigo-500 shrink-0" />
+                                    <Phone className="w-2.5 h-2.5 text-indigo-500 shrink-0" />
                                     <span className="font-mono font-black text-indigo-700 dark:text-indigo-300 text-xs sm:text-sm">
                                       {toPersianDigits(ext)}
                                     </span>
@@ -486,16 +488,16 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
 
                         {/* Direct Phones */}
                         {directPhones.length > 0 && (
-                          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 space-y-1.5 border border-slate-100 dark:border-slate-800">
-                            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-bold px-0.5">
-                              <PhoneCall className="w-3.5 h-3.5 text-emerald-500" />
+                          <div className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 space-y-1 border border-slate-100 dark:border-slate-800">
+                            <div className="text-[10.5px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-bold px-0.5">
+                              <PhoneCall className="w-3 h-3 text-emerald-500" />
                               <span>مستقیم</span>
                             </div>
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-0.5">
                               {directPhones.map((dir, i) => (
                                 <div key={i} className="flex items-center justify-between text-xs px-0.5 py-0.5">
                                   <div className="flex items-center gap-1.5">
-                                    <PhoneCall className="w-3 h-3 text-emerald-500 shrink-0" />
+                                    <PhoneCall className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
                                     <a
                                       href={`tel:${dir}`}
                                       onClick={(e) => e.stopPropagation()}
@@ -508,7 +510,7 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                                   <button
                                     type="button"
                                     onClick={(e) => handleCopy(e, dir, `card-dp-${emp.id}-${i}`)}
-                                    className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 cursor-pointer"
+                                    className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 cursor-pointer"
                                     title="کپی شماره مستقیم"
                                   >
                                     {copiedId === `card-dp-${emp.id}-${i}` ? (
@@ -525,16 +527,16 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
 
                         {/* Mobiles */}
                         {mobiles.length > 0 && (
-                          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 space-y-1.5 border border-slate-100 dark:border-slate-800">
-                            <div className="text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1.5 font-bold px-0.5">
-                              <Smartphone className="w-3.5 h-3.5 text-amber-500" />
+                          <div className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 space-y-1 border border-slate-100 dark:border-slate-800">
+                            <div className="text-[10.5px] text-amber-600 dark:text-amber-400 flex items-center gap-1.5 font-bold px-0.5">
+                              <Smartphone className="w-3 h-3 text-amber-500" />
                               <span>همراه</span>
                             </div>
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-0.5">
                               {mobiles.map((mob, i) => (
                                 <div key={i} className="flex items-center justify-between text-xs px-0.5 py-0.5">
                                   <div className="flex items-center gap-1.5">
-                                    <Smartphone className="w-3 h-3 text-amber-500 shrink-0" />
+                                    <Smartphone className="w-2.5 h-2.5 text-amber-500 shrink-0" />
                                     <a
                                       href={`tel:${mob}`}
                                       onClick={(e) => e.stopPropagation()}
@@ -547,8 +549,8 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                                   <button
                                     type="button"
                                     onClick={(e) => handleCopy(e, mob, `card-mob-${emp.id}-${i}`)}
-                                    className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 cursor-pointer"
-                                    title="کپی شماره همراه"
+                                    className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 cursor-pointer"
+                                    title="کپی همراه"
                                   >
                                     {copiedId === `card-mob-${emp.id}-${i}` ? (
                                       <Check className="w-3 h-3 text-emerald-600" />
@@ -564,16 +566,16 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
 
                         {/* Emails */}
                         {emails.length > 0 && (
-                          <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-950/50 space-y-1.5 border border-slate-100 dark:border-slate-800">
-                            <div className="text-[11px] text-sky-600 dark:text-sky-400 flex items-center gap-1.5 font-bold px-0.5">
-                              <Mail className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+                          <div className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-950/50 space-y-1 border border-slate-100 dark:border-slate-800">
+                            <div className="text-[10.5px] text-sky-600 dark:text-sky-400 flex items-center gap-1.5 font-bold px-0.5">
+                              <Mail className="w-3 h-3 text-sky-500 shrink-0" />
                               <span>ایمیل</span>
                             </div>
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-0.5">
                               {emails.map((eml, i) => (
                                 <div key={i} className="flex items-center justify-between text-xs px-0.5 py-0.5">
                                   <div className="flex items-center gap-1.5 min-w-0">
-                                    <Mail className="w-3 h-3 text-sky-500 shrink-0" />
+                                    <Mail className="w-2.5 h-2.5 text-sky-500 shrink-0" />
                                     <a
                                       href={`mailto:${eml}`}
                                       onClick={(e) => e.stopPropagation()}
@@ -586,7 +588,7 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                                   <button
                                     type="button"
                                     onClick={(e) => handleCopy(e, eml, `card-eml-${emp.id}-${i}`)}
-                                    className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
+                                    className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
                                     title="کپی ایمیل"
                                   >
                                     {copiedId === `card-eml-${emp.id}-${i}` ? (
@@ -619,10 +621,10 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                 <tr className="bg-slate-100/90 dark:bg-slate-800/90 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold select-none">
                   <th
                     onClick={() => onSortChange('full_name')}
-                    className="py-3 px-3.5 text-right w-[27%] hover:bg-slate-200/70 dark:hover:bg-slate-700/70 cursor-pointer transition-colors"
+                    className="py-2 px-2.5 text-right w-[28%] hover:bg-slate-200/70 dark:hover:bg-slate-700/70 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center gap-1.5">
-                      <span>نام و نام خانوادگی</span>
+                      <span>نام</span>
                       {sortField === 'full_name' ? (
                         sortOrder === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> : <ChevronDown className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                       ) : (
@@ -632,7 +634,7 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                   </th>
                   <th
                     onClick={() => onSortChange('department_id')}
-                    className="py-3 px-3.5 text-right w-[25%] hover:bg-slate-200/70 dark:hover:bg-slate-700/70 cursor-pointer transition-colors"
+                    className="py-2 px-2.5 text-right w-[27%] hover:bg-slate-200/70 dark:hover:bg-slate-700/70 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>واحد و سمت</span>
@@ -645,7 +647,7 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                   </th>
                   <th
                     onClick={() => onSortChange('extension')}
-                    className="py-3 px-2 text-center w-[12%] hover:bg-slate-200/70 dark:hover:bg-slate-700/70 cursor-pointer transition-colors"
+                    className="py-2 px-1.5 text-center w-[12%] hover:bg-slate-200/70 dark:hover:bg-slate-700/70 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center justify-center gap-1">
                       <span>داخلی</span>
@@ -658,10 +660,10 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                   </th>
                   <th
                     onClick={() => onSortChange('direct_phone')}
-                    className="py-3 px-2 text-center w-[13%] hover:bg-slate-200/70 dark:hover:bg-slate-700/70 cursor-pointer transition-colors"
+                    className="py-2 px-1.5 text-center w-[13%] hover:bg-slate-200/70 dark:hover:bg-slate-700/70 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center justify-center gap-1">
-                      <span>خط مستقیم</span>
+                      <span>مستقیم</span>
                       {sortField === 'direct_phone' ? (
                         sortOrder === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> : <ChevronDown className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                       ) : (
@@ -671,7 +673,7 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                   </th>
                   <th
                     onClick={() => onSortChange('mobile')}
-                    className="py-3 px-2 text-center w-[14%] hover:bg-slate-200/70 dark:hover:bg-slate-700/70 cursor-pointer transition-colors"
+                    className="py-2 px-1.5 text-center w-[14%] hover:bg-slate-200/70 dark:hover:bg-slate-700/70 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center justify-center gap-1">
                       <span>همراه</span>
@@ -682,7 +684,7 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                       )}
                     </div>
                   </th>
-                  <th className="py-3 px-2 text-center w-[9%]">اقدامات</th>
+                  <th className="py-2 px-1 text-center w-[6%] min-w-[38px] text-[11px]">عملیات</th>
                 </tr>
               </thead>
 
@@ -746,8 +748,8 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                     {/* ===== ROW 1: Main identity & primary phone lines ===== */}
                     <tr className="border-b-0">
                       {/* Col 1: Avatar + Name + Personnel Code */}
-                      <td className="pt-3 pb-1 px-3.5 align-middle">
-                        <div className="flex items-center gap-2.5">
+                      <td className="py-1.5 px-2.5 align-middle">
+                        <div className="flex items-center gap-2">
                           <MeteorAvatar
                             src={emp.avatar}
                             name={emp.full_name || `${emp.first_name} ${emp.last_name}`}
@@ -759,7 +761,7 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                             <div className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm truncate flex items-center gap-1.5">
                               <span>{emp.full_name || `${emp.first_name} ${emp.last_name}`}</span>
                               {emp.personnel_code && (
-                                <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-medium">
+                                <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded font-medium">
                                   {toPersianDigits(emp.personnel_code)}
                                 </span>
                               )}
@@ -769,7 +771,7 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                       </td>
 
                       {/* Col 2: Department & Position */}
-                      <td className="pt-3 pb-1 px-3.5 align-middle">
+                      <td className="py-1.5 px-2.5 align-middle">
                         <div className="min-w-0">
                           <div className="text-xs font-bold text-indigo-700 dark:text-indigo-400 truncate flex items-center gap-1">
                             <Building className="w-3 h-3 text-indigo-500 shrink-0" />
@@ -783,16 +785,16 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                       </td>
 
                       {/* Col 3: Extension(s) */}
-                      <td className="pt-3 pb-1 px-2 text-center align-middle" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-1.5 px-1.5 text-center align-middle" onClick={(e) => e.stopPropagation()}>
                         {extensions.length > 0 ? (
-                          <div className="flex flex-col items-center justify-center gap-1.5">
+                          <div className="flex flex-col items-center justify-center gap-1">
                             {extensions.map((ext, i) => (
                               <div
                                 key={i}
                                 title="داخلی"
-                                className="inline-flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-lg font-mono text-xs font-bold border border-indigo-200/60 dark:border-indigo-800/60 transition-transform hover:scale-102"
+                                className="inline-flex items-center justify-center gap-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-md font-mono text-xs font-bold border border-indigo-200/60 dark:border-indigo-800/60 transition-transform hover:scale-102"
                               >
-                                <Phone className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                <Phone className="w-3 h-3 text-indigo-500 shrink-0" />
                                 <span>{toPersianDigits(ext)}</span>
                                 <button
                                   type="button"
@@ -815,20 +817,20 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                       </td>
 
                       {/* Col 4: Direct Phone(s) */}
-                      <td className="pt-3 pb-1 px-2 text-center align-middle" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-1.5 px-1.5 text-center align-middle" onClick={(e) => e.stopPropagation()}>
                         {directPhones.length > 0 ? (
-                          <div className="flex flex-col items-center justify-center gap-1.5">
+                          <div className="flex flex-col items-center justify-center gap-1">
                             {directPhones.map((dir, i) => (
                               <div
                                 key={i}
                                 title="مستقیم"
-                                className="inline-flex items-center justify-center gap-1.5 bg-emerald-50/70 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-lg font-mono text-xs font-bold border border-emerald-200/60 dark:border-emerald-800/60 transition-transform hover:scale-102"
+                                className="inline-flex items-center justify-center gap-1 bg-emerald-50/70 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-md font-mono text-xs font-bold border border-emerald-200/60 dark:border-emerald-800/60 transition-transform hover:scale-102"
                               >
-                                <PhoneCall className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                <PhoneCall className="w-3 h-3 text-emerald-500 shrink-0" />
                                 <a
                                   href={`tel:${dir}`}
                                   className="hover:underline"
-                                  title={`تماس مستقیم: ${dir}`}
+                                  title={`تماس: ${dir}`}
                                   dir="ltr"
                                 >
                                   {toPersianDigits(dir)}
@@ -836,7 +838,7 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                                 <button
                                   type="button"
                                   onClick={(e) => handleCopy(e, dir, `dir-${emp.id}-${i}`)}
-                                  title="کپی شماره مستقیم"
+                                  title="کپی مستقیم"
                                   className="p-0.5 text-emerald-600/70 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-200 cursor-pointer mr-0.5"
                                 >
                                   {copiedId === `dir-${emp.id}-${i}` ? (
@@ -854,20 +856,20 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                       </td>
 
                       {/* Col 5: Irancell Mobile(s) */}
-                      <td className="pt-3 pb-1 px-2 text-center align-middle" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-1.5 px-1.5 text-center align-middle" onClick={(e) => e.stopPropagation()}>
                         {mobiles.length > 0 ? (
-                          <div className="flex flex-col items-center justify-center gap-1.5">
+                          <div className="flex flex-col items-center justify-center gap-1">
                             {mobiles.map((mob, i) => (
                               <div
                                 key={i}
                                 title="همراه"
-                                className="inline-flex items-center justify-center gap-1.5 bg-amber-50/70 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-lg font-mono text-xs font-bold border border-amber-200/60 dark:border-amber-800/60 transition-transform hover:scale-102"
+                                className="inline-flex items-center justify-center gap-1 bg-amber-50/70 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-md font-mono text-xs font-bold border border-amber-200/60 dark:border-amber-800/60 transition-transform hover:scale-102"
                               >
-                                <Smartphone className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                <Smartphone className="w-3 h-3 text-amber-500 shrink-0" />
                                 <a
                                   href={`tel:${mob}`}
                                   className="hover:underline"
-                                  title={`تماس با شماره همراه: ${mob}`}
+                                  title={`تماس: ${mob}`}
                                   dir="ltr"
                                 >
                                   {toPersianDigits(mob)}
@@ -875,7 +877,7 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                                 <button
                                   type="button"
                                   onClick={(e) => handleCopy(e, mob, `mob-${emp.id}-${i}`)}
-                                  title="کپی شماره همراه"
+                                  title="کپی همراه"
                                   className="p-0.5 text-amber-600/70 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-200 cursor-pointer mr-0.5"
                                 >
                                   {copiedId === `mob-${emp.id}-${i}` ? (
@@ -892,14 +894,18 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                         )}
                       </td>
 
-                      {/* Col 6: Quick Action Icons */}
-                      <td className="pt-3 pb-1 px-2 text-center align-middle" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-center gap-1">
+                      {/* Col 6: Quick Action Icons (Vertically Stacked to save horizontal width) */}
+                      <td
+                        rowSpan={2}
+                        className="py-1 px-1 text-center align-middle border-l border-slate-100 dark:border-slate-800/60"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex flex-col items-center justify-center gap-1">
                           {emp.extension && (
                             <a
                               href={`tel:${emp.extension}`}
-                              title={`تماس داخلی: ${emp.extension}`}
-                              className="p-1 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-300 transition-colors"
+                              title={`داخلی: ${emp.extension}`}
+                              className="p-1 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-300 transition-colors"
                             >
                               <PhoneCall className="w-3 h-3" />
                             </a>
@@ -907,8 +913,8 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                           {emp.email && (
                             <a
                               href={`mailto:${emp.email}`}
-                              title={`ارسال ایمیل: ${emp.email}`}
-                              className="p-1 rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100 dark:bg-sky-950/50 dark:text-sky-300 transition-colors"
+                              title={`ایمیل: ${emp.email}`}
+                              className="p-1 rounded-md bg-sky-50 text-sky-600 hover:bg-sky-100 dark:bg-sky-950/50 dark:text-sky-300 transition-colors"
                             >
                               <Mail className="w-3 h-3" />
                             </a>
@@ -916,8 +922,8 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                           <button
                             type="button"
                             onClick={() => onSelectEmployee(emp)}
-                            title="مشاهده شناسنامه کامل"
-                            className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                            title="پروفایل"
+                            className="p-1 rounded-md text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                           >
                             <ExternalLink className="w-3 h-3" />
                           </button>
@@ -928,13 +934,13 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                     {/* ===== ROW 2: Location, Building/Room, Email, Status & Profile link ===== */}
                     <tr className="text-xs text-slate-600 dark:text-slate-400">
                       {/* Col 1 & 2 (colspan 2): Formatted Location */}
-                      <td colSpan={2} className="pb-3 pt-0.5 px-3.5 align-middle">
+                      <td colSpan={2} className="pb-1.5 pt-0 px-2.5 align-middle">
                         {formattedLocation ? (
                           <div
-                            className="inline-flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400"
+                            className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400"
                             title={formattedLocation}
                           >
-                            <MapPin className="w-3.5 h-3.5 text-rose-500/80 dark:text-rose-400/80 shrink-0" />
+                            <MapPin className="w-3 h-3 text-rose-500/80 dark:text-rose-400/80 shrink-0" />
                             <span className="font-medium truncate max-w-[320px] sm:max-w-md">{formattedLocation}</span>
                           </div>
                         ) : (
@@ -943,9 +949,9 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                       </td>
 
                       {/* Col 3, 4 & 5 (colspan 3): Email & Notes */}
-                      <td colSpan={3} className="pb-3 pt-0.5 px-2 align-middle text-center" onClick={(e) => e.stopPropagation()}>
+                      <td colSpan={3} className="pb-1.5 pt-0 px-1.5 align-middle text-center" onClick={(e) => e.stopPropagation()}>
                         {emails.length > 0 ? (
-                          <div className="flex flex-col items-center justify-center gap-1 text-[11px]">
+                          <div className="flex flex-col items-center justify-center gap-0.5 text-[11px]">
                             {emails.map((eml, ei) => (
                               <div key={ei} className="inline-flex items-center gap-1">
                                 <Mail className="w-3 h-3 text-slate-400 shrink-0" />
@@ -976,9 +982,6 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                           <span className="text-[11px] text-slate-300 dark:text-slate-600">-</span>
                         )}
                       </td>
-
-                      {/* Col 6: Empty spacer for alignment */}
-                      <td className="pb-3 pt-0.5 px-2 text-center align-middle"></td>
                     </tr>
                   </tbody>
                 );

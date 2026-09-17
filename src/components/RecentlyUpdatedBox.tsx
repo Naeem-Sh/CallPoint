@@ -34,7 +34,7 @@ export const RecentlyUpdatedBox: React.FC<RecentlyUpdatedBoxProps> = ({
             <h3 className="text-xs font-bold text-slate-900 dark:text-white">
               آخرین تغییرات
             </h3>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">۳ ویرایش اخیر پرونده‌ها</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">ویرایش‌های اخیر</p>
           </div>
         </div>
       </div>

@@ -24,7 +24,13 @@ import {
   MapPin,
   Camera,
   FileCode,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Calendar,
+  Timer,
+  Check,
+  Zap,
+  Sliders,
+  Sparkles
 } from 'lucide-react';
 
 interface BackupItem {
@@ -40,6 +46,17 @@ interface BackupItem {
   has_excel_export?: boolean;
 }
 
+interface AutoBackupScheduleState {
+  enabled: boolean;
+  frequency: 'weekly' | 'daily' | 'monthly';
+  day_of_week: number;
+  day_of_week_name: string;
+  time: string;
+  last_run: string | null;
+  next_run: string;
+  is_running: boolean;
+}
+
 interface AdminBackupProps {
   onRefreshAll: () => void;
 }
@@ -53,6 +70,22 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Auto-backup schedule state
+  const [schedule, setSchedule] = useState<AutoBackupScheduleState>({
+    enabled: true,
+    frequency: 'weekly',
+    day_of_week: 5,
+    day_of_week_name: 'جمعه',
+    time: '02:00',
+    last_run: null,
+    next_run: new Date().toISOString(),
+    is_running: false,
+  });
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [scheduleSaving, setScheduleSaving] = useState(false);
+  const [scheduleTesting, setScheduleTesting] = useState(false);
+  const [scheduleSuccess, setScheduleSuccess] = useState<string | null>(null);
 
   // In-App Modals State (replaces blocked window.confirm in iframe)
   const [confirmRestoreItem, setConfirmRestoreItem] = useState<BackupItem | null>(null);
@@ -73,9 +106,64 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
     }
   };
 
+  const fetchSchedule = async () => {
+    try {
+      setScheduleLoading(true);
+      const res = await api.getBackupSchedule();
+      if (res && typeof res === 'object') {
+        setSchedule(res);
+      }
+    } catch (err: any) {
+      console.warn('Error fetching backup schedule:', err);
+    } finally {
+      setScheduleLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchBackups();
+    fetchSchedule();
   }, []);
+
+  const handleSaveSchedule = async (overrideData?: Partial<AutoBackupScheduleState>) => {
+    setScheduleSaving(true);
+    setError(null);
+    setScheduleSuccess(null);
+    try {
+      const dataToSave = {
+        auto_backup_enabled: overrideData?.enabled !== undefined ? overrideData.enabled : schedule.enabled,
+        auto_backup_frequency: overrideData?.frequency || schedule.frequency,
+        auto_backup_day_of_week: overrideData?.day_of_week !== undefined ? overrideData.day_of_week : schedule.day_of_week,
+        auto_backup_time: overrideData?.time || schedule.time,
+      };
+      const res = await api.updateBackupSchedule(dataToSave);
+      if (res.schedule) {
+        setSchedule(res.schedule);
+      }
+      setScheduleSuccess('تنظیمات زمان‌بندی پشتیبان خودکار با موفقیت ذخیره شد.');
+      setTimeout(() => setScheduleSuccess(null), 4000);
+    } catch (err: any) {
+      setError(err.message || 'خطا در ذخیره تنظیمات زمان‌بندی');
+    } finally {
+      setScheduleSaving(false);
+    }
+  };
+
+  const handleTriggerAutoBackupTest = async () => {
+    setScheduleTesting(true);
+    setError(null);
+    try {
+      const res = await api.triggerAutoBackupNow();
+      setSuccess(`پشتیبان خودکار با موفقیت اجرا شد: ${res.filename || 'فایل پشتیبان'}`);
+      await fetchBackups();
+      await fetchSchedule();
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (err: any) {
+      setError(err.message || 'خطا در اجرای فوری پشتیبان خودکار');
+    } finally {
+      setScheduleTesting(false);
+    }
+  };
 
   const handleCreateBackup = async () => {
     setLoading(true);
@@ -83,7 +171,7 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
     try {
       const res = await api.createBackup(comment.trim() || undefined);
       const fname = res.filename || res.backup?.filename || 'نسخه پشتیبان';
-      setSuccess(`نسخه پشتیبان با موفقیت ایجاد شد: ${fname}`);
+      setSuccess(`نسخه پشتیبان دستی با موفقیت ایجاد شد: ${fname}`);
       setComment('');
       await fetchBackups();
       setTimeout(() => setSuccess(null), 4000);
@@ -193,6 +281,34 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
 
   const totalBytes = backups.reduce((sum, b) => sum + (b.size || 0), 0);
 
+  const daysOfWeekList = [
+    { value: 6, label: 'شنبه' },
+    { value: 0, label: 'یکشنبه' },
+    { value: 1, label: 'دوشنبه' },
+    { value: 2, label: 'سه‌شنبه' },
+    { value: 3, label: 'چهارشنبه' },
+    { value: 4, label: 'پنج‌شنبه' },
+    { value: 5, label: 'جمعه (پیش‌فرض سازمان)' },
+  ];
+
+  const timeOptions = [
+    { value: '00:00', label: '۰۰:۰۰ (نیمه‌شب)' },
+    { value: '01:00', label: '۰۱:۰۰ بامداد' },
+    { value: '02:00', label: '۰۲:۰۰ بامداد (پیشنهادی)' },
+    { value: '03:00', label: '۰۳:۰۰ بامداد' },
+    { value: '04:00', label: '۰۴:۰۰ صبح' },
+    { value: '05:00', label: '۰۵:۰۰ صبح' },
+    { value: '12:00', label: '۱۲:۰۰ ظهر' },
+    { value: '18:00', label: '۱۸:۰۰ عصر' },
+    { value: '22:00', label: '۲۲:۰۰ شب' },
+  ];
+
+  const isAutoBackupComment = (comment?: string) => {
+    if (!comment) return false;
+    const norm = comment.toLowerCase();
+    return norm.includes('خودکار') || norm.includes('auto') || norm.includes('هفتگی') || norm.includes('weekly');
+  };
+
   return (
     <div className="space-y-6">
       {/* Safety & Retention Notice */}
@@ -230,7 +346,176 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
         </div>
       )}
 
-      {/* Action Bar */}
+      {/* ===================== AUTOMATIC BACKUP SCHEDULER PANEL ===================== */}
+      <div className="bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-950 text-white rounded-3xl p-5 border border-indigo-700/50 shadow-lg relative overflow-hidden">
+        {/* Background Subtle Ambient Glow */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-0 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
+
+        <div className="relative z-10 space-y-4">
+          {/* Header & Status */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-indigo-800/60">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 shrink-0">
+                <Calendar className="w-5 h-5 text-indigo-300" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                    <span>پشتیبان‌گیری خودکار هفتگی</span>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  </h3>
+                  {schedule.enabled ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold border border-emerald-500/40">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      <span>فعال و در حال اجرا</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[11px] font-bold border border-rose-500/40">
+                      <span>غیرفعال</span>
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-indigo-200/80 mt-0.5">
+                  تهیه خودکار و زمان‌بندی‌شده پشتیبان کامل از تمامی اطلاعات، عکس‌ها و اکسل کارکنان به صورت هفتگی
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Status / Test Button */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleTriggerAutoBackupTest}
+                disabled={scheduleTesting}
+                className="px-3.5 py-2 rounded-xl bg-indigo-600/60 hover:bg-indigo-600 text-indigo-100 hover:text-white border border-indigo-400/40 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                title="تست فوری ایجاد یک بکاپ خودکار همین حالا"
+              >
+                {scheduleTesting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-300" />}
+                <span>اجرای فوری بکاپ خودکار</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Configuration Form Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-center">
+            {/* Toggle Enable/Disable */}
+            <div className="md:col-span-3 bg-indigo-950/70 rounded-2xl p-3 border border-indigo-800/60 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-white block">وضعیت پشتیبان خودکار</span>
+                <span className="text-[11px] text-indigo-300">
+                  {schedule.enabled ? 'پشتیبان هفتگی فعال' : 'غیرفعال شده'}
+                </span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={schedule.enabled}
+                  onChange={(e) => {
+                    const nextVal = e.target.checked;
+                    setSchedule(prev => ({ ...prev, enabled: nextVal }));
+                    handleSaveSchedule({ enabled: nextVal });
+                  }}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+
+            {/* Frequency Selector */}
+            <div className="md:col-span-3 bg-indigo-950/70 rounded-2xl p-2.5 border border-indigo-800/60">
+              <label className="text-[11px] text-indigo-300 font-bold block mb-1">دوره تناوب پشتیبان‌گیری</label>
+              <select
+                value={schedule.frequency}
+                onChange={(e) => {
+                  const freq = e.target.value as 'weekly' | 'daily' | 'monthly';
+                  setSchedule(prev => ({ ...prev, frequency: freq }));
+                }}
+                className="w-full bg-slate-900 border border-indigo-700/80 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-indigo-400"
+              >
+                <option value="weekly">هفتگی (یک بار در هر هفته - استاندارد)</option>
+                <option value="daily">روزانه (یک بار در هر روز)</option>
+                <option value="monthly">ماهانه (یک بار در ماه)</option>
+              </select>
+            </div>
+
+            {/* Day of Week (for weekly mode) */}
+            <div className="md:col-span-3 bg-indigo-950/70 rounded-2xl p-2.5 border border-indigo-800/60">
+              <label className="text-[11px] text-indigo-300 font-bold block mb-1">روز هفته برای بکاپ هفتگی</label>
+              <select
+                value={schedule.day_of_week}
+                disabled={schedule.frequency !== 'weekly'}
+                onChange={(e) => {
+                  const day = parseInt(e.target.value, 10);
+                  setSchedule(prev => ({ ...prev, day_of_week: day }));
+                }}
+                className="w-full bg-slate-900 border border-indigo-700/80 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-indigo-400 disabled:opacity-50"
+              >
+                {daysOfWeekList.map(d => (
+                  <option key={d.value} value={d.value}>{d.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Time of Day */}
+            <div className="md:col-span-3 bg-indigo-950/70 rounded-2xl p-2.5 border border-indigo-800/60">
+              <label className="text-[11px] text-indigo-300 font-bold block mb-1">ساعت اجرای خودکار</label>
+              <select
+                value={schedule.time}
+                onChange={(e) => {
+                  setSchedule(prev => ({ ...prev, time: e.target.value }));
+                }}
+                className="w-full bg-slate-900 border border-indigo-700/80 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-indigo-400"
+              >
+                {timeOptions.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Schedule Footer Status & Save Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <div className="flex items-center gap-3 text-[11px] text-indigo-200/90 flex-wrap">
+              <span className="flex items-center gap-1.5">
+                <Timer className="w-3.5 h-3.5 text-emerald-400" />
+                <span>زمان پشتیبان بعدی:</span>
+                <strong className="text-white font-bold">
+                  {schedule.enabled ? formatPersianDateTime(schedule.next_run) : 'غیرفعال'}
+                </strong>
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-indigo-300" />
+                <span>آخرین پشتیبان خودکار:</span>
+                <span className="text-white">
+                  {schedule.last_run ? formatPersianDateTime(schedule.last_run) : 'تاکنون اجرا نشده'}
+                </span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {scheduleSuccess && (
+                <span className="text-xs text-emerald-300 flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{scheduleSuccess}</span>
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => handleSaveSchedule()}
+                disabled={scheduleSaving}
+                className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {scheduleSaving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>ذخیره تنظیمات زمان‌بندی</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Manual Backup Action Bar */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs">
         <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-1.5">
           <Plus className="w-4 h-4 text-indigo-600" />
@@ -296,7 +581,10 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
             )}
             <button
               type="button"
-              onClick={fetchBackups}
+              onClick={() => {
+                fetchBackups();
+                fetchSchedule();
+              }}
               disabled={loading}
               className="p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 transition-colors flex items-center gap-1 text-xs cursor-pointer"
               title="به‌روزرسانی لیست پشتیبان‌ها"
@@ -313,124 +601,133 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
               {searchTerm ? 'هیچ نسخه‌ای مطابق با عبارت جستجو یافت نشد.' : 'هیچ نسخه پشتیبانی یافت نشد.'}
             </div>
           ) : (
-            filteredBackups.map((b, idx) => (
-              <div
-                key={b.filename}
-                className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5 relative">
-                    <FileArchive className="w-5 h-5" />
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center">
-                      {toPersianDigits(idx + 1)}
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-bold font-mono text-slate-800 dark:text-slate-200 select-all">
-                        {b.filename}
+            filteredBackups.map((b, idx) => {
+              const isAuto = isAutoBackupComment(b.comment);
+              return (
+                <div
+                  key={b.filename}
+                  className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2.5 rounded-2xl ${isAuto ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' : 'bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400'} shrink-0 mt-0.5 relative`}>
+                      {isAuto ? <Calendar className="w-5 h-5" /> : <FileArchive className="w-5 h-5" />}
+                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center">
+                        {toPersianDigits(idx + 1)}
                       </span>
-                      {b.employee_count !== undefined && (
-                        <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg font-bold ${
-                          b.employee_count > 0 
-                            ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' 
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                        }`}>
-                          <Users className="w-3 h-3" />
-                          <span>{b.employee_count > 0 ? `${toPersianDigits(b.employee_count)} پرسنل` : 'خالی (۰ پرسنل)'}</span>
-                        </span>
-                      )}
-                      {Boolean(b.department_count && b.department_count > 0) && (
-                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-medium border border-blue-200 dark:border-blue-800">
-                          <Layers className="w-3 h-3" />
-                          <span>{toPersianDigits(b.department_count!)} واحد</span>
-                        </span>
-                      )}
-                      {Boolean(b.location_count && b.location_count > 0) && (
-                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 font-medium border border-teal-200 dark:border-teal-800">
-                          <MapPin className="w-3 h-3" />
-                          <span>{toPersianDigits(b.location_count!)} محل استقرار</span>
-                        </span>
-                      )}
-                      {Boolean(b.photo_count && b.photo_count > 0) && (
-                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 font-medium border border-purple-200 dark:border-purple-800">
-                          <Camera className="w-3 h-3" />
-                          <span>{toPersianDigits(b.photo_count!)} عکس پرسنلی</span>
-                        </span>
-                      )}
-                      {Boolean(b.json_count && b.json_count > 0) && (
-                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 font-medium border border-amber-200 dark:border-amber-800">
-                          <FileCode className="w-3 h-3" />
-                          <span>{toPersianDigits(b.json_count!)} فایل JSON</span>
-                        </span>
-                      )}
-                      {b.has_excel_export && (
-                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-medium border border-emerald-200 dark:border-emerald-800" title="دارای فایل گزارش جامع اکسل">
-                          <FileSpreadsheet className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                          <span>اکسل</span>
-                        </span>
-                      )}
-                      {b.comment && (
-                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-medium">
-                          <MessageSquare className="w-3 h-3" />
-                          <span>{b.comment}</span>
-                        </span>
-                      )}
                     </div>
-                    <div className="text-[11px] text-slate-400 flex items-center gap-2 flex-wrap">
-                      <Clock className="w-3 h-3" />
-                      <span>{formatPersianDateTime(b.created_at)}</span>
-                      <span>•</span>
-                      <span>حجم: {formatSize(b.size)}</span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-bold font-mono text-slate-800 dark:text-slate-200 select-all">
+                          {b.filename}
+                        </span>
+                        {isAuto && (
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-bold border border-emerald-300 dark:border-emerald-700">
+                            <Sparkles className="w-3 h-3 text-emerald-600 dark:text-emerald-300" />
+                            <span>بکاپ خودکار هفتگی</span>
+                          </span>
+                        )}
+                        {b.employee_count !== undefined && (
+                          <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg font-bold ${
+                            b.employee_count > 0 
+                              ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' 
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                          }`}>
+                            <Users className="w-3 h-3" />
+                            <span>{b.employee_count > 0 ? `${toPersianDigits(b.employee_count)} پرسنل` : 'خالی (۰ پرسنل)'}</span>
+                          </span>
+                        )}
+                        {Boolean(b.department_count && b.department_count > 0) && (
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-medium border border-blue-200 dark:border-blue-800">
+                            <Layers className="w-3 h-3" />
+                            <span>{toPersianDigits(b.department_count!)} واحد</span>
+                          </span>
+                        )}
+                        {Boolean(b.location_count && b.location_count > 0) && (
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 font-medium border border-teal-200 dark:border-teal-800">
+                            <MapPin className="w-3 h-3" />
+                            <span>{toPersianDigits(b.location_count!)} محل استقرار</span>
+                          </span>
+                        )}
+                        {Boolean(b.photo_count && b.photo_count > 0) && (
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 font-medium border border-purple-200 dark:border-purple-800">
+                            <Camera className="w-3 h-3" />
+                            <span>{toPersianDigits(b.photo_count!)} عکس پرسنلی</span>
+                          </span>
+                        )}
+                        {Boolean(b.json_count && b.json_count > 0) && (
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 font-medium border border-amber-200 dark:border-amber-800">
+                            <FileCode className="w-3 h-3" />
+                            <span>{toPersianDigits(b.json_count!)} فایل JSON</span>
+                          </span>
+                        )}
+                        {b.has_excel_export && (
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-medium border border-emerald-200 dark:border-emerald-800" title="دارای فایل گزارش جامع اکسل">
+                            <FileSpreadsheet className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                            <span>اکسل</span>
+                          </span>
+                        )}
+                        {b.comment && !isAuto && (
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-medium">
+                            <MessageSquare className="w-3 h-3" />
+                            <span>{b.comment}</span>
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-400 flex items-center gap-2 flex-wrap">
+                        <Clock className="w-3 h-3" />
+                        <span>{formatPersianDateTime(b.created_at)}</span>
+                        <span>•</span>
+                        <span>حجم: {formatSize(b.size)}</span>
+                      </div>
                     </div>
                   </div>
+
+                  <div className="flex items-center gap-2 self-end lg:self-center">
+                    <button
+                      type="button"
+                      disabled={downloading === b.filename}
+                      onClick={() => handleDownload(b.filename)}
+                      className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                      title="دانلود فایل فشرده ZIP"
+                    >
+                      {downloading === b.filename ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                      <span>دانلود</span>
+                    </button>
+
+                    {/* Restore Button (Opens Custom React Modal) */}
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={() => setConfirmRestoreItem(b)}
+                      className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors disabled:opacity-50 shadow-2xs"
+                      title="بازگردانی این نسخه"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>بازیابی</span>
+                    </button>
+
+                    {/* Delete Button (Opens Custom React Modal) */}
+                    <button
+                      type="button"
+                      disabled={deleting === b.filename}
+                      onClick={() => setConfirmDeleteItem(b)}
+                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                      title="حذف نسخه پشتیبان"
+                    >
+                      {deleting === b.filename ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-600" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-2 self-end lg:self-center">
-                  <button
-                    type="button"
-                    disabled={downloading === b.filename}
-                    onClick={() => handleDownload(b.filename)}
-                    className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-                    title="دانلود فایل فشرده ZIP"
-                  >
-                    {downloading === b.filename ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
-                    ) : (
-                      <Download className="w-3.5 h-3.5" />
-                    )}
-                    <span>دانلود</span>
-                  </button>
-
-                  {/* Restore Button (Opens Custom React Modal) */}
-                  <button
-                    type="button"
-                    disabled={loading}
-                    onClick={() => setConfirmRestoreItem(b)}
-                    className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors disabled:opacity-50 shadow-2xs"
-                    title="بازگردانی این نسخه"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>بازیابی</span>
-                  </button>
-
-                  {/* Delete Button (Opens Custom React Modal) */}
-                  <button
-                    type="button"
-                    disabled={deleting === b.filename}
-                    onClick={() => setConfirmDeleteItem(b)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                    title="حذف نسخه پشتیبان"
-                  >
-                    {deleting === b.filename ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-600" />
-                    ) : (
-                      <Trash2 className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

@@ -13,6 +13,12 @@ import {
   initializeStorage,
   getEmployees,
   saveEmployees,
+  getArchivedEmployees,
+  saveArchivedEmployees,
+  archiveEmployee,
+  restoreArchivedEmployee,
+  permanentlyDeleteArchivedEmployee,
+  emptyArchivedEmployees,
   getDepartments,
   saveDepartments,
   getPositions,
@@ -45,6 +51,12 @@ import {
   IMPORTS_DIR,
   STORAGE_DIR
 } from './server/storage.ts';
+import {
+  startAutoBackupScheduler,
+  performAutoBackup,
+  getAutoBackupStatus,
+  calculateNextAutoBackup
+} from './server/autoBackupScheduler.ts';
 import { Employee, Department, Position, LocationItem, DynamicFieldDefinition, AppUser } from './src/types.ts';
 import { generateFullExcelBuffer } from './server/excelExport.ts';
 
@@ -251,6 +263,7 @@ async function logErrorForTroubleshoot(
 
 async function startServer() {
   await initializeStorage();
+  startAutoBackupScheduler();
 
   const app = express();
   const PORT = 3000;
@@ -258,11 +271,16 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-  // Static uploads serving
-  app.use('/api/uploads/employees', express.static(EMP_UPLOADS_DIR));
-  app.use('/api/uploads/company', express.static(COMPANY_UPLOADS_DIR));
-  app.use('/uploads/employees', express.static(EMP_UPLOADS_DIR));
-  app.use('/uploads/company', express.static(COMPANY_UPLOADS_DIR));
+  // Static uploads serving with HTTP browser caching & ETag support
+  const staticUploadOptions = {
+    maxAge: '7d',
+    etag: true,
+    lastModified: true,
+  };
+  app.use('/api/uploads/employees', express.static(EMP_UPLOADS_DIR, staticUploadOptions));
+  app.use('/api/uploads/company', express.static(COMPANY_UPLOADS_DIR, staticUploadOptions));
+  app.use('/uploads/employees', express.static(EMP_UPLOADS_DIR, staticUploadOptions));
+  app.use('/uploads/company', express.static(COMPANY_UPLOADS_DIR, staticUploadOptions));
 
   // ===================== AUTH ROUTES =====================
   app.post('/api/auth/login', async (req, res) => {
@@ -575,14 +593,36 @@ async function startServer() {
       }
 
       const existing = employees[index];
+      const fName = data.first_name !== undefined ? String(data.first_name).trim() : (existing.first_name || '').trim();
+      const lName = data.last_name !== undefined ? String(data.last_name).trim() : (existing.last_name || '').trim();
+      const derivedFullName = `${fName} ${lName}`.trim();
+      const fullName = data.full_name !== undefined && String(data.full_name).trim() ? String(data.full_name).trim() : derivedFullName;
+
       const updated: Employee = {
         ...existing,
         ...data,
         id: existing.id,
+        first_name: fName,
+        last_name: lName,
+        full_name: fullName,
+        personnel_code: data.personnel_code !== undefined ? String(data.personnel_code).trim() : (existing.personnel_code || ''),
+        department_id: data.department_id !== undefined ? String(data.department_id).trim() : (existing.department_id || ''),
+        position_id: data.position_id !== undefined ? String(data.position_id).trim() : (existing.position_id || ''),
+        location_id: data.location_id !== undefined ? String(data.location_id).trim() : (existing.location_id || ''),
+        building: data.building !== undefined ? String(data.building).trim() : (existing.building || ''),
+        unit: data.unit !== undefined ? String(data.unit).trim() : (existing.unit || ''),
+        floor: data.floor !== undefined ? String(data.floor).trim() : (existing.floor || ''),
+        room: data.room !== undefined ? String(data.room).trim() : (existing.room || ''),
+        extension: data.extension !== undefined ? String(data.extension).trim() : (existing.extension || ''),
+        direct_phone: data.direct_phone !== undefined ? String(data.direct_phone).trim() : (existing.direct_phone || ''),
+        mobile: data.mobile !== undefined ? String(data.mobile).trim() : (existing.mobile || ''),
+        email: data.email !== undefined ? String(data.email).trim() : (existing.email || ''),
+        notes: data.notes !== undefined ? String(data.notes).trim() : (existing.notes || ''),
+        avatar: data.avatar !== undefined ? data.avatar : (existing.avatar || ''),
+        phones: Array.isArray(data.phones) ? data.phones : (existing.phones || []),
+        custom_fields: data.custom_fields !== undefined ? data.custom_fields : (existing.custom_fields || {}),
         created_at: existing.created_at,
         updated_at: new Date().toISOString(),
-        full_name: data.full_name || `${data.first_name || existing.first_name} ${data.last_name || existing.last_name}`.trim(),
-        phones: data.phones || existing.phones
       };
 
       employees[index] = updated;
@@ -600,19 +640,163 @@ async function startServer() {
     try {
       const user = (req as any).currentUser;
       const id = req.params.id;
-      let employees = await getEmployees();
-      const target = employees.find(e => e.id === id);
-      if (!target) {
-        return res.status(404).json({ error: 'کارمند یافت نشد.' });
+      const reason = req.body?.reason || 'انتقال به آرشیو توسط مدیر';
+      const result = await archiveEmployee(id, reason, user.name || user.username);
+      if (!result.success) {
+        return res.status(404).json({ error: result.message });
       }
 
-      employees = employees.filter(e => e.id !== id);
-      await saveEmployees(employees);
-      await logAudit(user.username, 'Delete Employee', target.full_name, `کد: ${target.personnel_code}`, req.ip);
+      await logAudit(user.username, 'Archive Employee', result.employee?.full_name || id, `انتقال به آرشیو - علت: ${reason}`, req.ip);
 
-      res.json({ message: 'کارمند با موفقیت حذف شد.' });
+      res.json({
+        success: true,
+        message: result.message,
+        employee: result.employee,
+        archived: true
+      });
     } catch (err: any) {
-      res.status(500).json({ error: 'خطا در حذف کارمند' });
+      console.error('Error archiving employee:', err);
+      res.status(500).json({ error: 'خطا در انتقال کارمند به آرشیو' });
+    }
+  });
+
+  app.post('/api/employees/batch-archive', requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).currentUser;
+      const { ids, reason } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: 'لیست شناسه‌های کارمندان نامعتبر است.' });
+      }
+
+      let successCount = 0;
+      for (const id of ids) {
+        const resArch = await archiveEmployee(id, reason || 'انتقال گروهی به آرشیو', user.name || user.username);
+        if (resArch.success) successCount++;
+      }
+
+      await logAudit(user.username, 'Batch Archive Employees', `${successCount} کارمند`, `تعداد کل: ${ids.length}`, req.ip);
+      res.json({
+        success: true,
+        message: `${successCount} پرونده کارمند با موفقیت به آرشیو منتقل شد.`
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: 'خطا در انتقال گروهی به آرشیو' });
+    }
+  });
+
+  // Archive management endpoints
+  app.get('/api/archive/employees', requireAuth, async (req, res) => {
+    try {
+      const archived = await getArchivedEmployees();
+      res.json(archived);
+    } catch (err: any) {
+      res.status(500).json({ error: 'خطا در دریافت لیست آرشیو' });
+    }
+  });
+
+  app.post('/api/archive/employees/:id/restore', requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).currentUser;
+      const id = req.params.id;
+      const result = await restoreArchivedEmployee(id);
+      if (!result.success) {
+        return res.status(404).json({ error: result.message });
+      }
+
+      await logAudit(user.username, 'Restore Employee', result.employee?.full_name || id, 'بازیابی از آرشیو', req.ip);
+
+      res.json({
+        success: true,
+        message: result.message,
+        employee: result.employee
+      });
+    } catch (err: any) {
+      console.error('Error restoring archived employee:', err);
+      res.status(500).json({ error: 'خطا در بازیابی پرونده از آرشیو' });
+    }
+  });
+
+  app.post('/api/archive/employees/batch-restore', requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).currentUser;
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: 'لیست شناسه‌ها نامعتبر است.' });
+      }
+
+      let count = 0;
+      for (const id of ids) {
+        const resRest = await restoreArchivedEmployee(id);
+        if (resRest.success) count++;
+      }
+
+      await logAudit(user.username, 'Batch Restore Employees', `${count} کارمند`, 'بازیابی گروهی از آرشیو', req.ip);
+      res.json({
+        success: true,
+        message: `${count} پرونده با موفقیت از آرشیو بازیابی و فعال شدند.`
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: 'خطا در بازیابی گروهی از آرشیو' });
+    }
+  });
+
+  app.delete('/api/archive/employees/:id', requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).currentUser;
+      const id = req.params.id;
+      const result = await permanentlyDeleteArchivedEmployee(id);
+      if (!result.success) {
+        return res.status(404).json({ error: result.message });
+      }
+
+      await logAudit(user.username, 'Permanent Delete Employee', id, 'حذف قطعی از آرشیو', req.ip);
+
+      res.json({
+        success: true,
+        message: result.message
+      });
+    } catch (err: any) {
+      console.error('Error permanently deleting archived employee:', err);
+      res.status(500).json({ error: 'خطا در حذف دائمی کارمند' });
+    }
+  });
+
+  app.post('/api/archive/employees/batch-delete', requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).currentUser;
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: 'لیست شناسه‌ها نامعتبر است.' });
+      }
+
+      let count = 0;
+      for (const id of ids) {
+        const resDel = await permanentlyDeleteArchivedEmployee(id);
+        if (resDel.success) count++;
+      }
+
+      await logAudit(user.username, 'Batch Permanent Delete Employees', `${count} کارمند`, 'حذف قطعی گروهی از آرشیو', req.ip);
+      res.json({
+        success: true,
+        message: `${count} پرونده با موفقیت به صورت دائمی از آرشیو حذف شدند.`
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: 'خطا در حذف قطعی گروهی از آرشیو' });
+    }
+  });
+
+  app.post('/api/archive/employees/empty', requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).currentUser;
+      const result = await emptyArchivedEmployees();
+      await logAudit(user.username, 'Empty Archive', 'تخلیه کامل', `حذف ${result.deleted_count} پرونده`, req.ip);
+      res.json({
+        success: true,
+        message: result.message,
+        deleted_count: result.deleted_count
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: 'خطا در پاک‌سازی کامل آرشیو' });
     }
   });
 
@@ -722,7 +906,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/departments', requireAdmin, async (req, res) => {
+  app.post('/api/departments', requireAuth, async (req, res) => {
     try {
       const user = (req as any).currentUser;
       const { name, code, phone_prefix, manager_name, manager_id, description, active, display_order } = req.body;
@@ -776,7 +960,7 @@ async function startServer() {
     }
   });
 
-  app.put('/api/departments/:id', requireAdmin, async (req, res) => {
+  app.put('/api/departments/:id', requireAuth, async (req, res) => {
     try {
       const user = (req as any).currentUser;
       const id = req.params.id;
@@ -830,7 +1014,7 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/departments/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/departments/:id', requireAuth, async (req, res) => {
     try {
       const user = (req as any).currentUser;
       const id = req.params.id;
@@ -872,7 +1056,7 @@ async function startServer() {
     }
   });
 
-  app.put('/api/departments/reorder/batch', requireAdmin, async (req, res) => {
+  app.put('/api/departments/reorder/batch', requireAuth, async (req, res) => {
     try {
       const { orderedIds } = req.body;
       if (!Array.isArray(orderedIds)) {
@@ -904,7 +1088,7 @@ async function startServer() {
   });
 
   // Reorder / set print order for employees within a specific department
-  app.put('/api/departments/:id/employee-order', requireAdmin, async (req, res) => {
+  app.put('/api/departments/:id/employee-order', requireAuth, async (req, res) => {
     try {
       const user = (req as any).currentUser;
       const deptId = req.params.id;
@@ -952,7 +1136,7 @@ async function startServer() {
     res.json(pos);
   });
 
-  app.post('/api/positions', requireAdmin, async (req, res) => {
+  app.post('/api/positions', requireAuth, async (req, res) => {
     const { title, level } = req.body;
     if (!title) return res.status(400).json({ error: 'عنوان سمت الزامی است.' });
     const list = await getPositions();
@@ -967,7 +1151,7 @@ async function startServer() {
     res.status(201).json(newItem);
   });
 
-  app.put('/api/positions/:id', requireAdmin, async (req, res) => {
+  app.put('/api/positions/:id', requireAuth, async (req, res) => {
     const list = await getPositions();
     const idx = list.findIndex(p => p.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: 'سمت یافت نشد.' });
@@ -976,7 +1160,7 @@ async function startServer() {
     res.json(list[idx]);
   });
 
-  app.delete('/api/positions/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/positions/:id', requireAuth, async (req, res) => {
     let list = await getPositions();
     list = list.filter(p => p.id !== req.params.id);
     await savePositions(list);
@@ -989,7 +1173,7 @@ async function startServer() {
     res.json(locs);
   });
 
-  app.put('/api/locations/reorder/batch', requireAdmin, async (req, res) => {
+  app.put('/api/locations/reorder/batch', requireAuth, async (req, res) => {
     try {
       const user = (req as any).currentUser;
       const { orderedIds } = req.body;
@@ -1028,7 +1212,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/locations', requireAdmin, async (req, res) => {
+  app.post('/api/locations', requireAuth, async (req, res) => {
     const { name, building, unit, floor, room, display_order } = req.body;
     const b = (building || '').trim();
     const u = (unit || '').trim();
@@ -1061,7 +1245,7 @@ async function startServer() {
     res.status(201).json(newItem);
   });
 
-  app.put('/api/locations/:id', requireAdmin, async (req, res) => {
+  app.put('/api/locations/:id', requireAuth, async (req, res) => {
     const list = await getLocations();
     const idx = list.findIndex(l => l.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: 'محل استقرار یافت نشد.' });
@@ -1091,7 +1275,7 @@ async function startServer() {
     res.json(list[idx]);
   });
 
-  app.delete('/api/locations/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/locations/:id', requireAuth, async (req, res) => {
     try {
       const user = (req as any).currentUser;
       const id = req.params.id;
@@ -2120,6 +2304,64 @@ async function startServer() {
     }
   });
 
+  // Automatic backup schedule status and configuration
+  app.get('/api/backup/schedule', requireAdmin, async (req, res) => {
+    try {
+      const status = await getAutoBackupStatus();
+      res.json(status);
+    } catch (err: any) {
+      res.status(500).json({ error: `خطا در دریافت وضعیت زمان‌بندی پشتیبان خودکار: ${err.message}` });
+    }
+  });
+
+  app.put('/api/backup/schedule', requireAdmin, async (req, res) => {
+    try {
+      const user = (req as any).currentUser;
+      const { auto_backup_enabled, auto_backup_frequency, auto_backup_day_of_week, auto_backup_time } = req.body;
+      const current = await getSettings();
+      const updated = {
+        ...current,
+        auto_backup_enabled: auto_backup_enabled !== undefined ? Boolean(auto_backup_enabled) : (current.auto_backup_enabled !== false),
+        auto_backup_frequency: auto_backup_frequency || current.auto_backup_frequency || 'weekly',
+        auto_backup_day_of_week: auto_backup_day_of_week !== undefined ? Number(auto_backup_day_of_week) : (current.auto_backup_day_of_week ?? 5),
+        auto_backup_time: auto_backup_time || current.auto_backup_time || '02:00'
+      };
+      await saveSettings(updated);
+      await logAudit(
+        user.username,
+        'Update Backup Schedule',
+        'Auto Backup Settings',
+        `تنظیمات پشتیبان خودکار به‌روزرسانی شد: وضعیت: ${updated.auto_backup_enabled ? 'فعال' : 'غیرفعال'}، دوره: ${updated.auto_backup_frequency}، ساعت: ${updated.auto_backup_time}`,
+        req.ip
+      );
+      const status = await getAutoBackupStatus();
+      res.json({
+        success: true,
+        message: 'تنظیمات زمان‌بندی پشتیبان خودکار با موفقیت ذخیره شد.',
+        schedule: status
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: `خطا در ذخیره تنظیمات زمان‌بندی پشتیبان خودکار: ${err.message}` });
+    }
+  });
+
+  app.post('/api/backup/auto-trigger', requireAdmin, async (req, res) => {
+    try {
+      const user = (req as any).currentUser;
+      const result = await performAutoBackup(
+        'پشتیبان خودکار هفتگی (اجرای دستی تست توسط مدیر)',
+        `تست فوری توسط کاربر ${user.username}`
+      );
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(500).json(result);
+      }
+    } catch (err: any) {
+      res.status(500).json({ error: `خطا در اجرای فوری پشتیبان خودکار: ${err.message}` });
+    }
+  });
+
   app.get('/api/backup/list', requireAdmin, async (req, res) => {
     try {
       if (!fs.existsSync(BACKUPS_DIR)) {
@@ -2376,6 +2618,37 @@ async function startServer() {
       res.json({ message: 'لوگو حذف شد.' });
     } catch (err) {
       res.status(500).json({ error: 'خطا در حذف لوگو' });
+    }
+  });
+
+  // Default Employee Avatar Endpoint
+  app.post('/api/default-avatar', requireAdmin, uploadCompanyLogo.single('default_avatar'), async (req, res) => {
+    try {
+      const user = (req as any).currentUser;
+      if (!req.file) {
+        return res.status(400).json({ error: 'فایل تصویر پیش‌فرض ارسال نشده است.' });
+      }
+      const avatarUrl = `/api/uploads/company/${req.file.filename}`;
+      const settings = await getSettings();
+      settings.default_avatar = avatarUrl;
+      await saveSettings(settings);
+      await logAudit(user.username, 'Change Default Avatar', 'Default Avatar', avatarUrl, req.ip);
+      res.json({ default_avatar: avatarUrl });
+    } catch (err: any) {
+      res.status(500).json({ error: 'خطا در آپلود تصویر پیش‌فرض پرسنل' });
+    }
+  });
+
+  app.delete('/api/default-avatar', requireAdmin, async (req, res) => {
+    try {
+      const user = (req as any).currentUser;
+      const settings = await getSettings();
+      settings.default_avatar = null;
+      await saveSettings(settings);
+      await logAudit(user.username, 'Delete Default Avatar', 'Default Avatar', 'تصویر پیش‌فرض حذف شد', req.ip);
+      res.json({ message: 'تصویر پیش‌فرض پروفایل پرسنل با موفقیت حذف گردید.' });
+    } catch (err) {
+      res.status(500).json({ error: 'خطا در حذف تصویر پیش‌فرض' });
     }
   });
 

@@ -1,6 +1,6 @@
 {
   "name": "دفتر تلفن",
-  "description": "سامانه حرفه‌ای و جامع دفتر تلفن داخلی و راهنمای ارتباطات پرسنل با معماری Server-First",
+  "description": "سامانه حرفه‌ای و جامع دفتر تلفن داخلی و راهنمای ارتباطات کارکنان با معماری Server-First",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

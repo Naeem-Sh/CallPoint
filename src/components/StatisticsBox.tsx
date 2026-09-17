@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { SystemStatistics, Employee, Department, LocationItem, Position } from '../types.ts';
 import { toPersianDigits, formatPersianDateTime } from '../utils/shamsi.ts';
+import { AnimatedCounter } from './common/AnimatedCounter.tsx';
+import { DepartmentStaffChart } from './DepartmentStaffChart.tsx';
 import {
   Users,
   Building,
@@ -18,6 +20,9 @@ interface StatisticsBoxProps {
   locations?: LocationItem[];
   positions?: Position[];
   loading?: boolean;
+  selectedDepartmentId?: string;
+  onSelectDepartment?: (deptId: string) => void;
+  onResetFilter?: () => void;
 }
 
 export const StatisticsBox: React.FC<StatisticsBoxProps> = ({
@@ -25,6 +30,9 @@ export const StatisticsBox: React.FC<StatisticsBoxProps> = ({
   employees = [],
   departments = [],
   loading = false,
+  selectedDepartmentId,
+  onSelectDepartment,
+  onResetFilter,
 }) => {
   // Compute live statistics with high resilience
   const effectiveStats: SystemStatistics = useMemo(() => {
@@ -63,8 +71,9 @@ export const StatisticsBox: React.FC<StatisticsBoxProps> = ({
   const statItems = [
     {
       title: 'کل کارکنان',
-      value: toPersianDigits(effectiveStats.total_employees),
-      sub: 'ثبت‌شده در سامانه تلفن',
+      type: 'counter',
+      numericValue: effectiveStats.total_employees,
+      sub: 'سامانه تلفن',
       icon: Users,
       color: 'from-blue-500 to-indigo-600',
       textColor: 'text-blue-600 dark:text-blue-400',
@@ -72,9 +81,10 @@ export const StatisticsBox: React.FC<StatisticsBoxProps> = ({
       borderColor: 'border-blue-200/80 dark:border-blue-800/60',
     },
     {
-      title: 'واحدهای کاری',
-      value: toPersianDigits(effectiveStats.departments_count),
-      sub: 'واحدهای فعال و مستقل',
+      title: 'واحدها',
+      type: 'counter',
+      numericValue: effectiveStats.departments_count,
+      sub: 'واحدهای فعال',
       icon: Building,
       color: 'from-purple-500 to-violet-600',
       textColor: 'text-purple-600 dark:text-purple-400',
@@ -82,9 +92,10 @@ export const StatisticsBox: React.FC<StatisticsBoxProps> = ({
       borderColor: 'border-purple-200/80 dark:border-purple-800/60',
     },
     {
-      title: 'شماره‌های تماس فعال',
-      value: toPersianDigits(effectiveStats.total_phone_numbers),
-      sub: 'شامل خطوط داخلی، مستقیم، همراه و فکس',
+      title: 'خطوط فعال',
+      type: 'counter',
+      numericValue: effectiveStats.total_phone_numbers,
+      sub: 'داخلی، مستقیم، همراه',
       icon: PhoneCall,
       color: 'from-emerald-500 to-teal-600',
       textColor: 'text-emerald-600 dark:text-emerald-400',
@@ -92,12 +103,14 @@ export const StatisticsBox: React.FC<StatisticsBoxProps> = ({
       borderColor: 'border-emerald-200/80 dark:border-emerald-800/60',
     },
     {
-      title: 'تصاویر بارگذاری‌شده',
-      value: `${toPersianDigits(effectiveStats.employees_with_photo)} / ${toPersianDigits(effectiveStats.total_employees)}`,
+      title: 'تصاویر',
+      type: 'fraction',
+      num1: effectiveStats.employees_with_photo,
+      num2: effectiveStats.total_employees,
       sub:
         effectiveStats.employees_without_photo === 0
-          ? '۱۰۰٪ همکاران دارای تصویر'
-          : `${toPersianDigits(effectiveStats.employees_without_photo)} همکار فاقد عکس`,
+          ? '۱۰۰٪ دارای تصویر'
+          : `${toPersianDigits(effectiveStats.employees_without_photo)} بدون تصویر`,
       icon: ImageIcon,
       color: 'from-amber-500 to-orange-600',
       textColor: 'text-amber-600 dark:text-amber-400',
@@ -105,9 +118,10 @@ export const StatisticsBox: React.FC<StatisticsBoxProps> = ({
       borderColor: 'border-amber-200/80 dark:border-amber-800/60',
     },
     {
-      title: 'جستجوهای ثبت‌شده',
-      value: toPersianDigits(effectiveStats.total_searches),
-      sub: `${toPersianDigits(effectiveStats.searches_last_24h)} جستجو در ۲۴ ساعت گذشته`,
+      title: 'جستجوها',
+      type: 'counter',
+      numericValue: effectiveStats.total_searches,
+      sub: `${toPersianDigits(effectiveStats.searches_last_24h)} در ۲۴ ساعت`,
       icon: Search,
       color: 'from-sky-500 to-cyan-600',
       textColor: 'text-sky-600 dark:text-sky-400',
@@ -115,7 +129,8 @@ export const StatisticsBox: React.FC<StatisticsBoxProps> = ({
       borderColor: 'border-sky-200/80 dark:border-sky-800/60',
     },
     {
-      title: 'آخرین به‌روزرسانی سامانه',
+      title: 'به‌روزرسانی',
+      type: 'text',
       value: formatPersianDateTime(effectiveStats.last_update).split(' - ')[1] || 'هم‌اکنون',
       sub: formatPersianDateTime(effectiveStats.last_update).split(' - ')[0] || 'امروز',
       icon: CalendarCheck,
@@ -136,13 +151,13 @@ export const StatisticsBox: React.FC<StatisticsBoxProps> = ({
           </div>
           <div>
             <h2 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
-              خلاصه آماری
+              آمار کارکنان
             </h2>
           </div>
         </div>
       </div>
 
-      {/* 6 Metric Cards */}
+      {/* 6 Metric Cards with Smooth Animated Counters */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {statItems.map((item, idx) => {
           const Icon = item.icon;
@@ -161,7 +176,17 @@ export const StatisticsBox: React.FC<StatisticsBoxProps> = ({
               </div>
               <div>
                 <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                  {item.value}
+                  {item.type === 'counter' && item.numericValue !== undefined ? (
+                    <AnimatedCounter value={item.numericValue} />
+                  ) : item.type === 'fraction' && item.num1 !== undefined && item.num2 !== undefined ? (
+                    <div className="flex items-baseline gap-1">
+                      <AnimatedCounter value={item.num1} />
+                      <span className="text-slate-400 font-normal text-sm">/</span>
+                      <AnimatedCounter value={item.num2} className="text-slate-500 text-base" />
+                    </div>
+                  ) : (
+                    item.value
+                  )}
                 </div>
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate mt-1">
                   {item.sub}
@@ -171,6 +196,17 @@ export const StatisticsBox: React.FC<StatisticsBoxProps> = ({
           );
         })}
       </div>
+
+      {/* Interactive Department Staffing Chart */}
+      {departments.length > 0 && onSelectDepartment && (
+        <DepartmentStaffChart
+          departments={departments}
+          employees={employees}
+          selectedDepartmentId={selectedDepartmentId}
+          onSelectDepartment={onSelectDepartment}
+          onResetFilter={onResetFilter}
+        />
+      )}
     </section>
   );
 };

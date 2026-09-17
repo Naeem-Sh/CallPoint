@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Department, Position, LocationItem, DynamicFieldDefinition } from '../types.ts';
 import { Search, Filter, X, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { toPersianDigits } from '../utils/shamsi.ts';
+import { AnimatedCounter } from './common/AnimatedCounter.tsx';
 
 interface SearchAndFiltersProps {
   fields: DynamicFieldDefinition[];
@@ -78,7 +79,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             type="text"
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
-            placeholder="جستجوی چندکلمه‌ای در نام، شماره پرسنلی، شماره داخلی، واحد، سمت، همراه و ایمیل..."
+            placeholder="جستجو بر اساس نام، داخلی، واحد..."
             className="w-full pl-10 pr-11 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all shadow-inner"
             dir="rtl"
           />
@@ -107,7 +108,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           }`}
         >
           <SlidersHorizontal className="w-4 h-4" />
-          <span>فیلترهای پویا</span>
+          <span>فیلترها</span>
           {activeFiltersCount > 0 && (
             <span className="bg-indigo-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">
               {toPersianDigits(activeFiltersCount)}
@@ -135,7 +136,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
                       onChange={(e) => onFilterChange(field.internal_name, e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
-                      <option value="all">همه واحدهای سازمانی</option>
+                      <option value="all">همه واحدها</option>
                       {departments
                         .filter((d) => d.active)
                         .map((d) => (
@@ -185,7 +186,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
                       onChange={(e) => onFilterChange(field.internal_name, e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
-                      <option value="all">همه مکان‌ها و ساختمان‌ها</option>
+                      <option value="all">همه مکان‌ها</option>
                       {locations
                         .filter((l) => l.active)
                         .map((l) => (
@@ -210,7 +211,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
                       onChange={(e) => onFilterChange(field.internal_name, e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
-                      <option value="all">همه موارد</option>
+                      <option value="all">همه</option>
                       {field.options.map((opt) => (
                         <option key={opt} value={opt}>
                           {opt}
@@ -231,7 +232,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
                     type="text"
                     value={currentVal === 'all' ? '' : currentVal}
                     onChange={(e) => onFilterChange(field.internal_name, e.target.value || 'all')}
-                    placeholder={`فیلتر بر اساس ${field.persian_label}`}
+                    placeholder={field.persian_label}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
@@ -243,14 +244,14 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60">
             <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
               {loading ? (
-                <span>در حال بارگذاری...</span>
+                <span>بارگذاری...</span>
               ) : (
-                <span>
-                  تعداد نتایج یافت‌شده:{' '}
+                <span className="flex items-center gap-1">
+                  <span>نتایج:</span>
                   <strong className="text-indigo-600 dark:text-indigo-400 font-bold">
-                    {toPersianDigits(totalResults)}
-                  </strong>{' '}
-                  کارمند
+                    <AnimatedCounter value={totalResults} />
+                  </strong>
+                  <span>نفر</span>
                 </span>
               )}
             </div>
@@ -265,7 +266,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
                 className="flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 font-semibold cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>پاک‌کردن فیلترها و جستجو</span>
+                <span>پاک کردن فیلترها</span>
               </button>
             )}
           </div>

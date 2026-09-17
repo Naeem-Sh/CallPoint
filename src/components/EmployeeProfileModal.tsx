@@ -3,6 +3,7 @@ import { Employee, DynamicFieldDefinition, Department, Position, LocationItem, P
 import { toPersianDigits, formatPersianDateTime } from '../utils/shamsi.ts';
 import { formatEmployeeLocation } from '../utils/location.ts';
 import { MeteorAvatar } from './MeteorAvatar.tsx';
+import { ProfileCompletenessCircle } from './ProfileCompletenessCircle.tsx';
 import {
   X,
   Phone,
@@ -134,27 +135,31 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
     : [];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div
+      id="employee-profile-modal-root"
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 print:p-0 print:bg-white print:static"
+    >
       <div
-        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-all animate-in fade-in zoom-in-95 duration-200"
+        id="employee-profile-modal-card"
+        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-all animate-in fade-in zoom-in-95 duration-200 print:shadow-none print:border-slate-300 print:max-w-full"
         dir="rtl"
       >
         {/* Header Ribbon */}
-        <div className="h-28 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-800 relative">
+        <div className="h-28 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-800 relative print:h-16">
           <button
             type="button"
             onClick={onClose}
             aria-label="بستن"
-            className="absolute top-4 left-4 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-md transition-colors cursor-pointer"
+            className="absolute top-4 left-4 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-md transition-colors cursor-pointer print:hidden"
           >
             <X className="w-5 h-5" />
           </button>
           <button
             type="button"
             onClick={handlePrint}
-            aria-label="چاپ کارت پرسنلی"
-            className="absolute top-4 left-16 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-md transition-colors cursor-pointer"
-            title="چاپ شناسنامه ارتباطی"
+            aria-label="چاپ"
+            className="absolute top-4 left-16 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-md transition-colors cursor-pointer print:hidden"
+            title="چاپ"
           >
             <Printer className="w-5 h-5" />
           </button>
@@ -163,9 +168,9 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               type="button"
               onClick={onToggleTheme}
               id="profile-ribbon-theme-toggle"
-              aria-label="تغییر تم تاریک و روشن"
-              className="absolute top-4 left-28 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-md transition-all cursor-pointer flex items-center justify-center active:scale-95"
-              title={theme === 'dark' ? 'تغییر به حالت روشن (Light Mode)' : 'تغییر به حالت تاریک (Dark Mode)'}
+              aria-label="تغییر پوسته"
+              className="absolute top-4 left-28 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-md transition-all cursor-pointer flex items-center justify-center active:scale-95 print:hidden"
+              title={theme === 'dark' ? 'روشن' : 'تاریک'}
             >
               {theme === 'dark' ? (
                 <Sun className="w-5 h-5 text-amber-300" />
@@ -179,7 +184,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
         {/* Profile Card Body */}
         <div className="px-6 pb-6 pt-0 relative">
           {/* Avatar & Hero Info */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-14 mb-6 text-center sm:text-right">
+          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-14 mb-6 text-center sm:text-right print:-mt-10">
             <div className="ring-4 ring-white dark:ring-slate-900 rounded-3xl shadow-xl bg-white dark:bg-slate-900 z-20 relative">
               <MeteorAvatar
                 src={employee.avatar}
@@ -196,25 +201,31 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                   {employee.full_name || `${employee.first_name} ${employee.last_name}`}
                 </h3>
                 <span className="text-xs font-mono font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 px-2.5 py-0.5 rounded-lg border border-indigo-200/60 dark:border-indigo-800/60">
-                  شماره پرسنلی: {toPersianDigits(employee.personnel_code)}
+                  پرسنلی: {toPersianDigits(employee.personnel_code)}
                 </span>
+                <ProfileCompletenessCircle
+                  employee={employee}
+                  locations={locations}
+                  size="sm"
+                  showLabel={true}
+                />
                 {onToggleTheme && (
                   <button
                     type="button"
                     onClick={onToggleTheme}
                     id="profile-hero-theme-toggle"
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/80 transition-all shadow-2xs cursor-pointer active:scale-95"
-                    title="تغییر وضعیت پوسته (تاریک / روشن)"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/80 transition-all shadow-2xs cursor-pointer active:scale-95 print:hidden"
+                    title="تغییر پوسته"
                   >
                     {theme === 'dark' ? (
                       <>
                         <Sun className="w-3.5 h-3.5 text-amber-400" />
-                        <span>پوسته روشن</span>
+                        <span>روشن</span>
                       </>
                     ) : (
                       <>
                         <Moon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                        <span>پوسته تاریک</span>
+                        <span>تاریک</span>
                       </>
                     )}
                   </button>
@@ -227,10 +238,10 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           </div>
 
           {/* Quick Contact Box */}
-          <div className="bg-slate-50 dark:bg-slate-950/70 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 mb-6">
+          <div className="bg-slate-50 dark:bg-slate-950/70 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 mb-6 print:mb-3">
             <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
               <Phone className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>شماره‌ها و کانال‌های ارتباطی</span>
+              <span>تماس</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -254,7 +265,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                             <a
                               href={`tel:${ext}`}
                               className="p-1 rounded-lg bg-indigo-100/70 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-200 transition-colors"
-                              title="تماس داخلی"
+                              title="تماس"
                             >
                               <Phone className="w-3 h-3" />
                             </a>
@@ -298,7 +309,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                             <a
                               href={`tel:${dir}`}
                               className="p-1 rounded-lg bg-emerald-100/70 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-200 transition-colors"
-                              title="برقراری تماس مستقیم"
+                              title="تماس مستقیم"
                             >
                               <PhoneCall className="w-3 h-3" />
                             </a>
@@ -306,7 +317,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                               type="button"
                               onClick={() => handleCopy(dir, key)}
                               className="p-1 rounded-lg text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors cursor-pointer"
-                              title="کپی شماره مستقیم"
+                              title="کپی مستقیم"
                             >
                               {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                             </button>
@@ -342,7 +353,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                             <a
                               href={`tel:${mob}`}
                               className="p-1 rounded-lg bg-amber-100/70 dark:bg-amber-900/50 text-amber-600 dark:text-amber-300 hover:bg-amber-200 transition-colors"
-                              title="برقراری تماس همراه"
+                              title="تماس همراه"
                             >
                               <Smartphone className="w-3 h-3" />
                             </a>
@@ -350,7 +361,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                               type="button"
                               onClick={() => handleCopy(mob, key)}
                               className="p-1 rounded-lg text-slate-400 hover:text-amber-600 dark:hover:text-amber-300 transition-colors cursor-pointer"
-                              title="کپی شماره همراه"
+                              title="کپی همراه"
                             >
                               {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                             </button>
@@ -367,7 +378,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-2xs space-y-2">
                   <div className="text-[11px] font-bold text-sky-700 dark:text-sky-300 flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-sky-500 shrink-0" />
-                    <span>پست الکترونیک</span>
+                    <span>ایمیل</span>
                   </div>
                   <div className="flex flex-col gap-1.5">
                     {emails.map((eml, i) => {
@@ -386,7 +397,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                             <a
                               href={`mailto:${eml}`}
                               className="p-1 rounded-lg bg-sky-100/70 dark:bg-sky-900/50 text-sky-600 dark:text-sky-300 hover:bg-sky-200 transition-colors"
-                              title="ارسال ایمیل"
+                              title="ایمیل"
                             >
                               <Mail className="w-3 h-3" />
                             </a>
@@ -411,7 +422,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-2xs space-y-2">
                   <div className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
                     <Printer className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>سایر شماره‌ها</span>
+                    <span>سایر خطوط</span>
                   </div>
                   <div className="flex flex-col gap-1.5">
                     {otherPhones.map((ph, i) => {
@@ -446,19 +457,19 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           <div className="mb-6">
             <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
               <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              <span>مشخصات و فیلدهای ثبت‌شده</span>
+              <span>سایر مشخصات</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/60 dark:border-slate-800/80">
-                <span className="text-slate-400 block text-[11px] mb-0.5">نام و نام خانوادگی:</span>
+                <span className="text-slate-400 block text-[11px] mb-0.5">نام:</span>
                 <span className="font-bold text-slate-800 dark:text-slate-200">
                   {employee.first_name} {employee.last_name}
                 </span>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/60 dark:border-slate-800/80">
-                <span className="text-slate-400 block text-[11px] mb-0.5">کد شناسایی:</span>
+                <span className="text-slate-400 block text-[11px] mb-0.5">شماره پرسنلی:</span>
                 <span className="font-bold font-mono text-indigo-600 dark:text-indigo-400">
                   {toPersianDigits(employee.personnel_code)}
                 </span>
@@ -470,7 +481,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/60 dark:border-slate-800/80">
-                <span className="text-slate-400 block text-[11px] mb-0.5">سمت / عنوان:</span>
+                <span className="text-slate-400 block text-[11px] mb-0.5">سمت:</span>
                 <span className="font-bold text-slate-800 dark:text-slate-200">{pos?.title || '-'}</span>
               </div>
 
@@ -501,7 +512,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
 
             {employee.notes && (
               <div className="mt-3 p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60 text-xs">
-                <span className="text-amber-700 dark:text-amber-400 font-bold block mb-1">یادداشت / توضیحات:</span>
+                <span className="text-amber-700 dark:text-amber-400 font-bold block mb-1">یادداشت:</span>
                 <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{employee.notes}</p>
               </div>
             )}
@@ -510,9 +521,9 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
           {/* Footer Metadata & Actions */}
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
             <div className="flex flex-wrap items-center gap-3">
-              <span>شناسه سیستم: {employee.id}</span>
-              <span>آخرین به‌روزرسانی: {formatPersianDateTime(employee.updated_at)}</span>
-              <span>دفعات جستجو: {toPersianDigits(employee.search_count || 0)}</span>
+              <span>شناسه: {employee.id}</span>
+              <span>به‌روزرسانی: {formatPersianDateTime(employee.updated_at)}</span>
+              <span>جستجو: {toPersianDigits(employee.search_count || 0)}</span>
             </div>
 
             {onDuplicate && (
@@ -520,10 +531,10 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
                 type="button"
                 onClick={() => onDuplicate(employee)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-300 font-bold text-xs border border-amber-200/80 dark:border-amber-800 transition-colors cursor-pointer"
-                title="دوپلیکیت خودکار و ایجاد یک کارت جدید با همین مشخصات"
+                title="کارت مشابه"
               >
                 <Copy className="w-3.5 h-3.5" />
-                <span>دوپلیکیت و ایجاد کارت جدید</span>
+                <span>کارت مشابه</span>
               </button>
             )}
           </div>

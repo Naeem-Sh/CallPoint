@@ -176,11 +176,11 @@
     "active": true
   },
   {
-    "id": "f-room",
-    "internal_name": "room",
-    "persian_label": "اتاق / طبقه",
+    "id": "f-unit",
+    "internal_name": "unit",
+    "persian_label": "واحد",
     "type": "text",
-    "placeholder": "مثال: اتاق ۳۰۴",
+    "placeholder": "مثال: ۵۰۱",
     "required": false,
     "searchable": true,
     "filterable": false,
@@ -188,6 +188,21 @@
     "importable": true,
     "exportable": true,
     "display_order": 13,
+    "active": true
+  },
+  {
+    "id": "f-room",
+    "internal_name": "room",
+    "persian_label": "اتاق",
+    "type": "text",
+    "placeholder": "مثال: ۱۲",
+    "required": false,
+    "searchable": true,
+    "filterable": false,
+    "visible": true,
+    "importable": true,
+    "exportable": true,
+    "display_order": 14,
     "active": true
   },
   {

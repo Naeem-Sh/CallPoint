@@ -400,7 +400,7 @@ export const AdminExcel: React.FC<AdminExcelProps> = ({
 
     if (conflictResolution === 'replace_all') {
       const confirmed = window.confirm(
-        'هشدار جدی: با انتخاب گزینه «پاکسازی کامل و جایگزینی»، کلیه پرسنل قبلی از سیستم حذف شده و فقط اطلاعات فایل اکسل جدید درج خواهند شد. آیا مطمئنید؟'
+        'هشدار جدی: با انتخاب گزینه «پاکسازی کامل و جایگزینی»، کلیه کارکنان قبلی از سیستم حذف شده و فقط اطلاعات فایل اکسل جدید درج خواهند شد. آیا مطمئنید؟'
       );
       if (!confirmed) return;
     }
@@ -428,7 +428,7 @@ export const AdminExcel: React.FC<AdminExcelProps> = ({
 
       setSuccess(
         res.message ||
-          `واردسازی با موفقیت انجام شد: ${toPersianDigits(res.inserted ?? res.imported ?? 0)} پرسنل جدید، ${toPersianDigits(
+          `واردسازی با موفقیت انجام شد: ${toPersianDigits(res.inserted ?? res.imported ?? 0)} نفر از کارکنان جدید، ${toPersianDigits(
             res.updated ?? 0
           )} به‌روزرسانی.`
       );
@@ -746,7 +746,7 @@ export const AdminExcel: React.FC<AdminExcelProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                    مرحله ۱: بارگذاری فایل اکسل پرسنل
+                    مرحله ۱: بارگذاری فایل اکسل کارکنان
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     پشتیبانی از فرمت‌های XLSX و XLS • تطبیق خودکار ستون‌های فارسی و انگلیسی
@@ -857,7 +857,7 @@ export const AdminExcel: React.FC<AdminExcelProps> = ({
                   </div>
 
                   <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60">
-                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold block">پرسنل جدید</span>
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold block">کارکنان جدید</span>
                     <span className="text-lg font-black text-emerald-950 dark:text-emerald-200">
                       {toPersianDigits(previewData.new_count ?? (previewData.total_rows - (previewData.duplicate_count || 0)))} نفر
                     </span>
@@ -1027,7 +1027,7 @@ export const AdminExcel: React.FC<AdminExcelProps> = ({
                                 <td className="p-2.5">
                                   {pr.status === 'new' ? (
                                     <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800">
-                                      پرسنل جدید
+                                      کارکنان جدید
                                     </span>
                                   ) : pr.status === 'update' ? (
                                     <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 text-[10px] font-bold border border-amber-200 dark:border-amber-800">
@@ -1062,7 +1062,7 @@ export const AdminExcel: React.FC<AdminExcelProps> = ({
                 {/* Import Strategy Options */}
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3">
                   <label className="block text-xs font-black text-slate-800 dark:text-slate-200">
-                    نحوه اعمال اطلاعات بر روی پرسنل موجود:
+                    نحوه اعمال اطلاعات بر روی کارکنان موجود:
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <button
@@ -1076,7 +1076,7 @@ export const AdminExcel: React.FC<AdminExcelProps> = ({
                     >
                       <div className="font-bold text-xs mb-1">به‌روزرسانی رکوردهای موجود</div>
                       <div className="text-[11px] opacity-80">
-                        شماره‌ها و اطلاعات جدید بر روی پرسنل با کد یکسان ثبت می‌شود (پیش‌فرض).
+                        شماره‌ها و اطلاعات جدید بر روی کارکنان با کد یکسان ثبت می‌شود (پیش‌فرض).
                       </div>
                     </button>
 
@@ -1091,7 +1091,7 @@ export const AdminExcel: React.FC<AdminExcelProps> = ({
                     >
                       <div className="font-bold text-xs mb-1">صرف‌نظر از ردیف‌های تکراری</div>
                       <div className="text-[11px] opacity-80">
-                        فقط پرسنل با کد جدید اضافه می‌شوند و اطلاعات قبلی دست‌نخورده می‌ماند.
+                        فقط کارکنان با کد جدید اضافه می‌شوند و اطلاعات قبلی دست‌نخورده می‌ماند.
                       </div>
                     </button>
 
@@ -1106,7 +1106,7 @@ export const AdminExcel: React.FC<AdminExcelProps> = ({
                     >
                       <div className="font-bold text-xs mb-1 text-rose-700 dark:text-rose-400">پاکسازی کامل و جایگزینی</div>
                       <div className="text-[11px] opacity-80">
-                        تمام پرسنل فعلی پاک شده و تنها محتوای این فایل اکسل ثبت می‌گردد.
+                        تمام کارکنان فعلی پاک شده و تنها محتوای این فایل اکسل ثبت می‌گردد.
                       </div>
                     </button>
                   </div>

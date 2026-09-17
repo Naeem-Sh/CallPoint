@@ -153,14 +153,14 @@ export const AdminDepartments: React.FC<AdminDepartmentsProps> = ({
     try {
       const orderedIds = deptEmployeesList.map((e) => e.id);
       await api.updateDepartmentEmployeeOrder(orderingDept.id, orderedIds);
-      setOrderingSuccess(`اولویت چاپ پرسنل واحد «${orderingDept.name}» با موفقیت ذخیره شد.`);
+      setOrderingSuccess(`اولویت چاپ کارکنان واحد «${orderingDept.name}» با موفقیت ذخیره شد.`);
       onRefresh();
       setTimeout(() => {
         setOrderingDept(null);
         setOrderingSuccess(null);
       }, 1400);
     } catch (err: any) {
-      setError(err.message || 'خطا در ذخیره ترتیب پرسنل در چاپ');
+      setError(err.message || 'خطا در ذخیره ترتیب کارکنان در چاپ');
     } finally {
       setIsOrderingSaving(false);
     }
@@ -246,10 +246,10 @@ export const AdminDepartments: React.FC<AdminDepartmentsProps> = ({
         </div>
         <div>
           <h4 className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
-            اولویت‌بندی واحدهای سازمانی و چینش پرسنل در چاپ
+            اولویت‌بندی واحدهای سازمانی و چینش کارکنان در چاپ
           </h4>
           <p className="text-[11px] text-indigo-700 dark:text-indigo-300 mt-0.5 leading-relaxed">
-            واحدهای سازمانی با رتبه بالاتر در دفترچه تلفن چاپی زودتر از سایر واحدها چاپ می‌شوند. علاوه بر این، با کلیک روی دکمه «ترتیب پرسنل در چاپ»، می‌توانید اولویت و رتبه تک‌تک نفرات هر واحد را مشخص کنید تا در خروجی چاپی دقیقاً به همان ترتیبی که مدنظرتان است (مثلاً مدیر و مسئولین در صدر) قرار گیرند.
+            واحدهای سازمانی با رتبه بالاتر در دفترچه تلفن چاپی زودتر از سایر واحدها چاپ می‌شوند. علاوه بر این، با کلیک روی دکمه «ترتیب کارکنان در چاپ»، می‌توانید اولویت و رتبه تک‌تک نفرات هر واحد را مشخص کنید تا در خروجی چاپی دقیقاً به همان ترتیبی که مدنظرتان است (مثلاً مدیر و مسئولین در صدر) قرار گیرند.
           </p>
         </div>
       </div>
@@ -345,10 +345,10 @@ export const AdminDepartments: React.FC<AdminDepartmentsProps> = ({
                         type="button"
                         onClick={() => openEmployeeOrderModal(dept)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold text-xs border border-indigo-200/60 dark:border-indigo-800/60 transition-all cursor-pointer shadow-2xs"
-                        title="مشخص کردن ترتیب و رتبه پرسنل این واحد در خروجی چاپی"
+                        title="مشخص کردن ترتیب و رتبه کارکنان این واحد در خروجی چاپی"
                       >
                         <Printer className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                        <span>ترتیب پرسنل در چاپ ({toPersianDigits(count)})</span>
+                        <span>ترتیب کارکنان در چاپ ({toPersianDigits(count)})</span>
                       </button>
                     </td>
 
@@ -393,7 +393,7 @@ export const AdminDepartments: React.FC<AdminDepartmentsProps> = ({
                 <Printer className="w-5 h-5" />
                 <div>
                   <h3 className="text-base font-black text-slate-900 dark:text-white">
-                    تنظیم اولویت و ترتیب پرسنل در چاپ
+                    تنظیم اولویت و ترتیب کارکنان در چاپ
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     واحد سازمانی: <span className="font-bold text-indigo-600 dark:text-indigo-400">{orderingDept.name}</span> ({toPersianDigits(deptEmployeesList.length)} نفر)
@@ -412,7 +412,7 @@ export const AdminDepartments: React.FC<AdminDepartmentsProps> = ({
             {/* Explanation & Quick Action Tools */}
             <div className="p-3.5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
               <p className="text-indigo-900 dark:text-indigo-200 leading-relaxed">
-                پرسنلی که در ردیف‌های بالاتر قرار می‌گیرند (رتبه ۱، ۲، ...)، در دفترچه تلفن چاپی زودتر و بالاتر از بقیه اعضای این واحد چاپ خواهند شد.
+                کارکنانی که در ردیف‌های بالاتر قرار می‌گیرند (رتبه ۱، ۲، ...)، در دفترچه تلفن چاپی زودتر و بالاتر از بقیه اعضای این واحد چاپ خواهند شد.
               </p>
               <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
                 {orderingDept.manager_id && (
@@ -465,7 +465,7 @@ export const AdminDepartments: React.FC<AdminDepartmentsProps> = ({
             <div className="max-h-96 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
               {deptEmployeesList.length === 0 ? (
                 <div className="py-12 text-center text-slate-400 text-xs">
-                  هیچ پرسنلی در این واحد سازمانی ثبت نشده است.
+                  هیچ کارمندی در این واحد سازمانی ثبت نشده است.
                 </div>
               ) : (
                 deptEmployeesList.map((emp, idx) => {
@@ -525,7 +525,7 @@ export const AdminDepartments: React.FC<AdminDepartmentsProps> = ({
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                            <span>{pos?.title || emp.custom_fields?.job_title || 'پرسنل'}</span>
+                            <span>{pos?.title || emp.custom_fields?.job_title || 'کارمند'}</span>
                             {emp.personnel_code && (
                               <>
                                 <span>•</span>
@@ -714,14 +714,14 @@ export const AdminDepartments: React.FC<AdminDepartmentsProps> = ({
               <div className="space-y-3">
                 <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs leading-relaxed">
                   <span className="font-bold block mb-1">
-                    توجه: این واحد سازمانی شامل {toPersianDigits(empCountMap.get(deptToDelete.id) || 0)} پرسنل است.
+                    توجه: این واحد سازمانی شامل {toPersianDigits(empCountMap.get(deptToDelete.id) || 0)} نفر از کارکنان است.
                   </span>
-                  می‌توانید پرسنل این واحد را به یکی دیگر از واحدهای سازمانی منتقل کنید، یا در صورت تمایل آنها را بدون واحد (آزاد) بگذارید.
+                  می‌توانید کارکنان این واحد را به یکی دیگر از واحدهای سازمانی منتقل کنید، یا در صورت تمایل آنها را بدون واحد (آزاد) بگذارید.
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    انتقال پرسنل به واحد سازمانی:
+                    انتقال کارکنان به واحد سازمانی:
                   </label>
                   <select
                     value={targetReassignDeptId}

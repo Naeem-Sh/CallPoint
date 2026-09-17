@@ -1,5 +1,6 @@
 import React from 'react';
 import { AnalogClock } from './AnalogClock.tsx';
+import { BackgroundThemePicker } from './BackgroundThemePicker.tsx';
 import { AppSettings, AppUser } from '../types.ts';
 import { Phone, ShieldCheck, Sun, Moon, LogIn, LogOut, UserCheck, Building2, Printer } from 'lucide-react';
 
@@ -13,6 +14,8 @@ interface HeaderProps {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   onOpenPrint?: () => void;
+  bgThemeId?: string;
+  onSelectBgTheme?: (id: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,6 +28,8 @@ export const Header: React.FC<HeaderProps> = ({
   theme,
   onToggleTheme,
   onOpenPrint,
+  bgThemeId,
+  onSelectBgTheme,
 }) => {
   return (
     <header className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition-colors shadow-xs">
@@ -53,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
                   </h1>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-semibold mt-0.5 max-w-[260px] sm:max-w-lg">
-                  {settings?.organization_name || 'سامانه جامع راهنمای تلفن و اطلاعات پرسنل'}
+                  {settings?.organization_name || 'سامانه جامع راهنمای تلفن و اطلاعات کارکنان'}
                 </p>
               </div>
             </div>
@@ -66,15 +71,23 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={onOpenPrint}
                   aria-label="چاپ"
                   className="p-2 rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 transition-colors"
-                  title="بخش چاپ (تک‌برگ و کامل)"
+                  title="چاپ"
                 >
                   <Printer className="w-4 h-4" />
                 </button>
               )}
+              {onSelectBgTheme && (
+                <BackgroundThemePicker
+                  currentThemeId={bgThemeId || 'slate-grid'}
+                  onSelectTheme={onSelectBgTheme}
+                  isDarkMode={theme === 'dark'}
+                  compact
+                />
+              )}
               <button
                 type="button"
                 onClick={onToggleTheme}
-                aria-label="تغییر تم"
+                aria-label="تغییر پوسته"
                 className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
@@ -86,14 +99,14 @@ export const Header: React.FC<HeaderProps> = ({
                     onClick={onToggleAdmin}
                     className="text-xs px-2.5 py-1.5 rounded-xl bg-indigo-600 text-white font-bold shadow-xs hover:bg-indigo-700"
                   >
-                    {isAdminView ? 'فهرست عمومی' : 'پنل مدیریت'}
+                    {isAdminView ? 'فهرست' : 'مدیریت'}
                   </button>
                   <button
                     type="button"
                     onClick={onLogout}
                     className="text-xs p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60"
-                    title="خروج از حساب"
-                    aria-label="خروج از حساب"
+                    title="خروج"
+                    aria-label="خروج"
                   >
                     <LogOut className="w-4 h-4" />
                   </button>
@@ -117,37 +130,50 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Actions: Theme Switcher & Admin Auth */}
           <div className="hidden lg:flex items-center gap-2.5">
-            {/* Print Directory Button */}
+            {/* Print Button */}
             {onOpenPrint && (
               <button
                 type="button"
                 onClick={onOpenPrint}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200/80 dark:border-indigo-800/80 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all cursor-pointer shadow-xs active:scale-95"
-                title="بخش چاپ تک‌برگ رومیزی و چاپ کامل"
+                title="چاپ"
               >
                 <Printer className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                <span>چاپ راهنما</span>
+                <span>چاپ</span>
               </button>
             )}
 
-            {/* Theme Switcher */}
+            {/* Background Color & Pattern Selector */}
+            {onSelectBgTheme && (
+              <BackgroundThemePicker
+                currentThemeId={bgThemeId || 'slate-grid'}
+                onSelectTheme={onSelectBgTheme}
+                isDarkMode={theme === 'dark'}
+              />
+            )}
+
+            {/* Theme Toggle Switch */}
             <button
               type="button"
               onClick={onToggleTheme}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-              title="تغییر پوسته تاریک/روشن"
+              className="relative inline-flex items-center h-8 w-14 rounded-full bg-slate-200 dark:bg-slate-800 p-0.5 transition-colors border border-slate-300/80 dark:border-slate-700/80 cursor-pointer shadow-xs"
+              title={theme === 'dark' ? 'پوسته روشن' : 'پوسته تاریک'}
+              aria-label="تغییر پوسته"
             >
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="w-3.5 h-3.5 text-amber-400" />
-                  <span>روشن</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-3.5 h-3.5 text-slate-600" />
-                  <span>تاریک</span>
-                </>
-              )}
+              <span className="sr-only">تغییر تم</span>
+              <span
+                className={`flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-slate-900 shadow-sm transition-all transform ${
+                  theme === 'dark' ? '-translate-x-6 text-indigo-400' : 'translate-x-0 text-amber-500'
+                }`}
+              >
+                {theme === 'dark' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+              </span>
+              <span className="absolute left-1.5 text-slate-400 dark:text-indigo-400 pointer-events-none">
+                {theme !== 'dark' && <Moon className="w-3 h-3 text-slate-400" />}
+              </span>
+              <span className="absolute right-1.5 text-slate-400 pointer-events-none">
+                {theme === 'dark' && <Sun className="w-3 h-3 text-amber-400/70" />}
+              </span>
             </button>
 
             {/* Admin status & toggle */}
@@ -163,7 +189,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }`}
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  <span>{isAdminView ? 'مشاهده فهرست اصلی' : 'ورود به پنل مدیریت'}</span>
+                  <span>{isAdminView ? 'فهرست' : 'مدیریت'}</span>
                 </button>
 
                 {/* User Profile Badge */}
@@ -186,7 +212,7 @@ export const Header: React.FC<HeaderProps> = ({
                   type="button"
                   onClick={onLogout}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80 text-xs font-bold transition-colors cursor-pointer"
-                  title="خروج از حساب کاربری"
+                  title="خروج"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>خروج</span>
@@ -197,9 +223,10 @@ export const Header: React.FC<HeaderProps> = ({
                 type="button"
                 onClick={onOpenLogin}
                 className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+                title="ورود"
               >
                 <LogIn className="w-4 h-4" />
-                <span>ورود مدیر / ویرایشگر</span>
+                <span>ورود</span>
               </button>
             )}
           </div>

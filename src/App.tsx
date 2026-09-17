@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Employee,
   DynamicFieldDefinition,
@@ -23,12 +23,36 @@ import { AdminPanel } from './components/admin/AdminPanel.tsx';
 import { PrintDirectoryModal } from './components/PrintDirectoryModal.tsx';
 import { Shield, Sparkles, Heart } from 'lucide-react';
 import { toPersianDigits } from './utils/shamsi.ts';
+import { setDefaultAvatar } from './utils/image.ts';
+import { DEFAULT_BG_THEME_ID, getBackgroundTheme } from './utils/backgroundThemes.ts';
 
 export default function App() {
   // Theme State
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('org_directory_theme') as 'light' | 'dark') || 'light';
   });
+
+  // Background Theme & Pattern State (10 presets)
+  const [bgThemeId, setBgThemeId] = useState<string>(() => {
+    return localStorage.getItem('org_directory_bg_theme') || DEFAULT_BG_THEME_ID;
+  });
+
+  const activeBgTheme = useMemo(() => {
+    return getBackgroundTheme(bgThemeId);
+  }, [bgThemeId]);
+
+  const handleSelectBgTheme = useCallback((id: string) => {
+    setBgThemeId(id);
+    try {
+      localStorage.setItem('org_directory_bg_theme', id);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const currentBgStyle = useMemo(() => {
+    return theme === 'dark' ? activeBgTheme.darkStyle : activeBgTheme.lightStyle;
+  }, [theme, activeBgTheme]);
 
   // Auth & View Mode
   const [currentUser, setCurrentUser] = useState<AppUser | null>(() => getStoredUser());
@@ -129,7 +153,9 @@ export default function App() {
       setDepartments(Array.isArray(dData) ? dData : (dData?.departments || []));
       setPositions(Array.isArray(pData) ? pData : (pData?.positions || []));
       setLocations(Array.isArray(lData) ? lData : (lData?.locations || []));
-      setSettings(sData?.settings || sData || null);
+      const loadedSettings = sData?.settings || sData || null;
+      setSettings(loadedSettings);
+      setDefaultAvatar(loadedSettings?.default_avatar);
       setStats(statsData?.statistics || statsData || null);
       setHealth(healthData || null);
     } catch (err) {
@@ -260,113 +286,137 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/60 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans transition-colors selection:bg-indigo-500 selection:text-white">
-      {/* Header */}
-      <Header
-        settings={settings}
-        currentUser={currentUser}
-        onOpenLogin={() => setIsLoginModalOpen(true)}
-        onLogout={handleLogout}
-        onToggleAdmin={() => setIsAdminView(!isAdminView)}
-        isAdminView={isAdminView}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        onOpenPrint={() => setIsPrintModalOpen(true)}
-      />
+    <div
+      className="min-h-screen text-slate-800 dark:text-slate-100 font-sans transition-colors selection:bg-indigo-500 selection:text-white"
+      style={currentBgStyle}
+    >
+      {/* Background App Shell (hidden when printing directory) */}
+      <div id="app-main-shell" className={isPrintModalOpen ? 'print:hidden' : ''}>
+        {/* Header */}
+        <Header
+          settings={settings}
+          currentUser={currentUser}
+          onOpenLogin={() => setIsLoginModalOpen(true)}
+          onLogout={handleLogout}
+          onToggleAdmin={() => setIsAdminView(!isAdminView)}
+          isAdminView={isAdminView}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onOpenPrint={() => setIsPrintModalOpen(true)}
+          bgThemeId={bgThemeId}
+          onSelectBgTheme={handleSelectBgTheme}
+        />
 
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {isAdminView && currentUser ? (
-          <AdminPanel
-            employees={employees}
-            fields={fields}
-            departments={departments}
-            positions={positions}
-            locations={locations}
-            stats={stats}
-            health={health}
-            settings={settings}
-            currentUser={currentUser}
-            onRefreshAll={refreshAll}
-            onCloseAdmin={() => setIsAdminView(false)}
-            onLogout={handleLogout}
-          />
-        ) : (
-          <div className="space-y-6">
-            {/* Top Statistics Box */}
-            <StatisticsBox
-              stats={stats}
+        {/* Main Content Area */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {isAdminView && currentUser ? (
+            <AdminPanel
               employees={employees}
+              fields={fields}
               departments={departments}
-              locations={locations}
               positions={positions}
-              loading={loading}
+              locations={locations}
+              stats={stats}
+              health={health}
+              settings={settings}
+              currentUser={currentUser}
+              onRefreshAll={refreshAll}
+              onCloseAdmin={() => setIsAdminView(false)}
+              onLogout={handleLogout}
             />
+          ) : (
+            <div className="space-y-6">
+              {/* Top Statistics Box */}
+              <StatisticsBox
+                stats={stats}
+                employees={employees}
+                departments={departments}
+                locations={locations}
+                positions={positions}
+                loading={loading}
+                selectedDepartmentId={selectedFilters.department_id}
+                onSelectDepartment={(deptId) => {
+                  if (selectedFilters.department_id === deptId) {
+                    handleFilterChange('department_id', 'all');
+                  } else {
+                    handleFilterChange('department_id', deptId);
+                    // Smoothly scroll down to employee directory
+                    setTimeout(() => {
+                      const el = document.getElementById('employee-directory-section');
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 50);
+                  }
+                }}
+                onResetFilter={() => handleFilterChange('department_id', 'all')}
+              />
 
-            {/* Main Content Layout with Left Column for Highlights */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-              {/* Right Main Column (RTL Start) */}
-              <div className="lg:col-span-9 xl:col-span-9 space-y-6 min-w-0">
-                {/* Dynamic Search & Filters Section */}
-                <SearchAndFilters
-                  fields={fields}
-                  departments={departments}
-                  positions={positions}
-                  locations={locations}
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  selectedFilters={selectedFilters}
-                  onFilterChange={handleFilterChange}
-                  onResetFilters={handleResetFilters}
-                  totalResults={employees.length}
-                  loading={loading}
-                />
+              {/* Main Content Layout with Left Column for Highlights */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                {/* Right Main Column (RTL Start) */}
+                <div className="lg:col-span-9 xl:col-span-9 space-y-6 min-w-0">
+                  {/* Dynamic Search & Filters Section */}
+                  <SearchAndFilters
+                    fields={fields}
+                    departments={departments}
+                    positions={positions}
+                    locations={locations}
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    selectedFilters={selectedFilters}
+                    onFilterChange={handleFilterChange}
+                    onResetFilters={handleResetFilters}
+                    totalResults={employees.length}
+                    loading={loading}
+                  />
 
-                {/* Central Employee Directory (All employees, dynamic columns, sortable) */}
-                <EmployeeDirectory
-                  employees={employees}
-                  fields={fields}
-                  departments={departments}
-                  positions={positions}
-                  locations={locations}
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSortChange={handleSortChange}
-                  onSelectEmployee={handleEmployeeClick}
-                  loading={loading}
-                  onOpenPrint={() => setIsPrintModalOpen(true)}
-                />
+                  {/* Central Employee Directory (All employees, dynamic columns, sortable) */}
+                  <EmployeeDirectory
+                    employees={employees}
+                    fields={fields}
+                    departments={departments}
+                    positions={positions}
+                    locations={locations}
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSortChange={handleSortChange}
+                    onSelectEmployee={handleEmployeeClick}
+                    loading={loading}
+                    onOpenPrint={() => setIsPrintModalOpen(true)}
+                  />
+                </div>
+
+                {/* Left Column (RTL End) - Narrower, Compact Column at Top Left */}
+                <aside className="lg:col-span-3 xl:col-span-3 space-y-3.5 lg:sticky lg:top-20">
+                  {/* آخرین تغییرات */}
+                  <RecentlyUpdatedBox
+                    employees={recentlyUpdated}
+                    departments={departments}
+                    positions={positions}
+                    onSelectEmployee={handleEmployeeClick}
+                  />
+
+                  {/* پرجستجوترین همکاران */}
+                  <MostSearchedBox
+                    employees={mostSearched}
+                    departments={departments}
+                    positions={positions}
+                    onSelectEmployee={handleEmployeeClick}
+                  />
+                </aside>
               </div>
-
-              {/* Left Column (RTL End) - Narrower, Compact Column at Top Left */}
-              <aside className="lg:col-span-3 xl:col-span-3 space-y-3.5 lg:sticky lg:top-20">
-                {/* آخرین تغییرات */}
-                <RecentlyUpdatedBox
-                  employees={recentlyUpdated}
-                  departments={departments}
-                  positions={positions}
-                  onSelectEmployee={handleEmployeeClick}
-                />
-
-                {/* پرجستجوترین همکاران */}
-                <MostSearchedBox
-                  employees={mostSearched}
-                  departments={departments}
-                  positions={positions}
-                  onSelectEmployee={handleEmployeeClick}
-                />
-              </aside>
             </div>
-          </div>
-        )}
-      </main>
+          )}
+        </main>
 
-      {/* Footer */}
-      <footer className="mt-12 border-t border-slate-200/80 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xs py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs font-mono text-slate-500 dark:text-slate-400">
-          Developed by: N.Shaaeri
-        </div>
-      </footer>
+        {/* Footer */}
+        <footer className="mt-12 border-t border-slate-200/80 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xs py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs font-mono text-slate-500 dark:text-slate-400">
+            Developed by: N.Shaaeri
+          </div>
+        </footer>
+      </div>
 
       {/* Print Directory Modal */}
       {isPrintModalOpen && (

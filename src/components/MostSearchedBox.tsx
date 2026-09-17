@@ -38,9 +38,9 @@ export const MostSearchedBox: React.FC<MostSearchedBoxProps> = ({
           </div>
           <div>
             <h3 className="text-xs font-bold text-slate-900 dark:text-white">
-              پرجستجوترین همکاران
+              پرجستجوترین‌ها
             </h3>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">۳ همکار با بیشترین میزان جستجو</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">بیشترین بازدید</p>
           </div>
         </div>
       </div>

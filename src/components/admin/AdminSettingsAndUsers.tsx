@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppSettings, AppUser } from '../../types.ts';
 import { api } from '../../utils/api.ts';
+import { setDefaultAvatar } from '../../utils/image.ts';
 import {
   Building2,
   Upload,
@@ -21,6 +22,8 @@ import {
   UserX,
   Lock,
   X,
+  User,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 interface AdminSettingsAndUsersProps {
@@ -135,6 +138,46 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
       setTimeout(() => setSuccess(null), 3500);
     } catch (err: any) {
       setError(err.message || 'خطا در حذف لوگو');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDefaultAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fd = new FormData();
+    fd.append('default_avatar', file);
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.uploadDefaultAvatar(fd);
+      setDefaultAvatar(res.default_avatar);
+      setSuccess('تصویر پیش‌فرض پروفایل کارکنان با موفقیت به‌روزرسانی شد.');
+      onRefreshSettings();
+      setTimeout(() => setSuccess(null), 3500);
+    } catch (err: any) {
+      setError(err.message || 'خطا در بارگذاری تصویر پیش‌فرض کارکنان');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteDefaultAvatar = async () => {
+    if (!confirm('آیا از حذف تصویر پیش‌فرض کارکنان و بازگشت به حروف اول نام اطمینان دارید؟')) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      await api.deleteDefaultAvatar();
+      setDefaultAvatar(null);
+      setSuccess('تصویر پیش‌فرض حذف شد و حالت نمایش حروف اول نام فعال گردید.');
+      onRefreshSettings();
+      setTimeout(() => setSuccess(null), 3500);
+    } catch (err: any) {
+      setError(err.message || 'خطا در حذف تصویر پیش‌فرض');
     } finally {
       setLoading(false);
     }
@@ -276,41 +319,134 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
             </h3>
           </div>
 
-          <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800">
-            {settings?.logo_url ? (
-              <img
-                src={settings.logo_url}
-                alt="لوگو"
-                className="w-20 h-20 object-contain select-none"
-              />
-            ) : (
-              <div className="w-20 h-20 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-2xl shadow-sm">
-                🏢
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer shadow-sm">
-                <Upload className="w-3.5 h-3.5" />
-                <span>بارگذاری نشان جدید</span>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                  onChange={handleLogoUpload}
-                  className="hidden"
+          {/* 1. Organization Logo */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              نشان و لوگوی رسمی سازمان
+            </label>
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800">
+              {settings?.logo_url ? (
+                <img
+                  src={settings.logo_url}
+                  alt="لوگو"
+                  className="w-16 h-16 object-contain select-none bg-white dark:bg-slate-900 rounded-xl p-1 border border-slate-200 dark:border-slate-800"
                 />
-              </label>
-
-              {settings?.logo_url && (
-                <button
-                  type="button"
-                  onClick={handleDeleteLogo}
-                  className="block text-xs text-rose-600 hover:underline cursor-pointer"
-                >
-                  حذف نشان و استفاده از نشان پیش‌فرض
-                </button>
+              ) : (
+                <div className="w-16 h-16 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-2xl shadow-sm shrink-0">
+                  🏢
+                </div>
               )}
-              <p className="text-[10px] text-slate-400">فرمت‌های مجاز: PNG, JPG, SVG, WEBP (حداکثر ۲ مگابایت)</p>
+
+              <div className="space-y-1.5 min-w-0">
+                <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer shadow-sm">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>بارگذاری نشان جدید</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                  />
+                </label>
+
+                {settings?.logo_url && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteLogo}
+                    className="block text-xs text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                  >
+                    حذف نشان و استفاده از نشان پیش‌فرض
+                  </button>
+                )}
+                
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5 leading-relaxed pt-1">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <span className="text-slate-700 dark:text-slate-300 font-bold">رزولوشن پیشنهادی:</span>
+                    <span className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">500×500</span>
+                    <span>یا</span>
+                    <span className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">600×200</span>
+                    <span>پیکسل (حداقل 300×300)</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-700 dark:text-slate-300 font-bold">فرمت‌های مجاز:</span>
+                    <span className="font-medium mr-1">PNG (پیشنهاد با پس‌زمینه شفاف)، SVG، JPG، WEBP (حداکثر ۱۰ مگابایت)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Default Employee Avatar Upload */}
+          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-indigo-600" />
+                <span>تصویر پیش‌فرض پروفایل کارکنان (فاقد عکس)</span>
+              </label>
+              {settings?.default_avatar && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60">
+                  فعال
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800">
+              {settings?.default_avatar ? (
+                <div className="relative group shrink-0">
+                  <img
+                    src={settings.default_avatar}
+                    alt="تصویر پیش‌فرض کارکنان"
+                    className="w-16 h-16 rounded-2xl object-cover border-2 border-indigo-500 shadow-sm"
+                  />
+                  <div className="absolute -bottom-1 -right-1 p-1 bg-indigo-600 text-white rounded-full text-[9px]">
+                    <CheckCircle2 className="w-3 h-3" />
+                  </div>
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center font-black text-xl shadow-sm shrink-0">
+                  👤
+                </div>
+              )}
+
+              <div className="space-y-1.5 min-w-0">
+                <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold cursor-pointer shadow-sm">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>بارگذاری تصویر پیش‌فرض کارکنان</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleDefaultAvatarUpload}
+                    className="hidden"
+                  />
+                </label>
+
+                {settings?.default_avatar && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteDefaultAvatar}
+                    className="block text-xs text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                  >
+                    حذف تصویر پیش‌فرض و استفاده از حروف اول نام
+                  </button>
+                )}
+
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5 leading-relaxed pt-1">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <span className="text-slate-700 dark:text-slate-300 font-bold">رزولوشن پیشنهادی:</span>
+                    <span className="font-mono text-purple-600 dark:text-purple-400 font-bold">600×600</span>
+                    <span>تا</span>
+                    <span className="font-mono text-purple-600 dark:text-purple-400 font-bold">800×800</span>
+                    <span>پیکسل مربعی (حداقل 400×400)</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-700 dark:text-slate-300 font-bold">فرمت‌های مجاز:</span>
+                    <span className="font-medium mr-1">PNG، JPG، WEBP (حداکثر ۱۰ مگابایت)</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 pt-0.5">
+                    این تصویر برای تمامی همکارانی که در پروفایل خود عکس ندارند یا عکس آن‌ها حذف شده است اعمال می‌شود.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -466,7 +602,7 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
                           <div className="text-[11px] text-slate-400 mt-0.5">
                             {isAdmin
                               ? 'دسترسی کامل (مدیریت، فیلدها، کاربران و بکاپ)'
-                              : 'دسترسی ویرایش (پرسنل، شماره‌ها و اکسل)'}
+                              : 'دسترسی ویرایش (کارکنان، شماره‌ها و اکسل)'}
                           </div>
                         </div>
                       </div>
@@ -552,7 +688,7 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
                   منطقه حساس: بازنشانی کامل پایگاه داده (Reset All)
                 </h3>
                 <p className="text-xs text-rose-700 dark:text-rose-300/80 mt-1 max-w-2xl leading-relaxed">
-                  این عملیات کلیه پرسنل، شماره‌ها و فیلدهای ثبت‌شده را پاکسازی کرده و سامانه را برای ورود ساختاریافته فایل اکسل جدید آماده می‌کند.
+                  این عملیات کلیه کارکنان، شماره‌ها و فیلدهای ثبت‌شده را پاکسازی کرده و سامانه را برای ورود ساختاریافته فایل اکسل جدید آماده می‌کند.
                 </p>
               </div>
             </div>
@@ -645,7 +781,7 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
                       {newUser.role === 'editor' && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />}
                     </div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
-                      مدیریت پرسنل و اکسل
+                      مدیریت کارکنان و اکسل
                     </div>
                   </button>
 
