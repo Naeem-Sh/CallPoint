@@ -777,7 +777,7 @@ export async function createBackupZip(
 
   // Metadata with comprehensive statistics
   const meta = {
-    version: '1.0.0',
+    version: '2.0.0',
     created_at: new Date().toISOString(),
     comment,
     employee_count: employeesCount,

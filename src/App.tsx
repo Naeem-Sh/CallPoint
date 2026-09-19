@@ -9,6 +9,7 @@ import {
   SystemHealth,
   AppSettings,
   AppUser,
+  APP_VERSION,
 } from './types.ts';
 import { api, getStoredUser, setAuthToken, setStoredUser } from './utils/api.ts';
 import { Header } from './components/Header.tsx';
@@ -411,9 +412,18 @@ export default function App() {
         </main>
 
         {/* Footer */}
-        <footer className="mt-12 border-t border-slate-200/80 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xs py-6">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs font-mono text-slate-500 dark:text-slate-400">
-            Developed by: N.Shaaeri
+        <footer className="mt-12 border-t border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xs py-4">
+          <div dir="ltr" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            {/* Version badge with active status indicator on the left */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700 text-xs font-mono text-slate-700 dark:text-slate-300 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 inline-block"></span>
+              <span className="font-semibold tracking-wide">v{APP_VERSION}</span>
+            </div>
+
+            {/* Developer signature on the right */}
+            <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+              Developed by : N.Shaaeri
+            </div>
           </div>
         </footer>
       </div>

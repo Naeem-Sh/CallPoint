@@ -1,7 +1,7 @@
 {
   "name": "org-phonebook",
   "description": "Enterprise organization phonebook, employee directory, and extension management system with persistent storage and Docker support",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "author": "shaaeri <shaaeri@gmail.com>",
   "license": "MIT",

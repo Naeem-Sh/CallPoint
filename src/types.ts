@@ -234,3 +234,5 @@ export interface HealthCheckResult {
   };
   checked_at?: string;
 }
+
+export const APP_VERSION = '2.0.0';

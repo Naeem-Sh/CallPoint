@@ -1,5 +1,4 @@
 import React from 'react';
-import { AnalogClock } from './AnalogClock.tsx';
 import { BackgroundThemePicker } from './BackgroundThemePicker.tsx';
 import { AppSettings, AppUser } from '../types.ts';
 import { Phone, ShieldCheck, Sun, Moon, LogIn, LogOut, UserCheck, Building2, Printer } from 'lucide-react';
@@ -121,11 +120,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
             </div>
-          </div>
-
-          {/* Center: Minimal Analog Clock & Real-time Persian Date */}
-          <div className="hidden md:flex items-center justify-center">
-            <AnalogClock size={52} />
           </div>
 
           {/* Actions: Theme Switcher & Admin Auth */}
