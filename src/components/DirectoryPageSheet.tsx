@@ -406,7 +406,7 @@ export const DirectoryPageSheet: React.FC<DirectoryPageSheetProps> = ({
         className="printable-directory-footer mt-auto pt-1.5 border-t border-black flex items-center justify-between text-black font-medium shrink-0"
         style={{ fontSize: `${Math.max(fontSizePt * 0.85, 6)}pt` }}
       >
-        <div className="font-bold text-black tracking-wide">Developed by: N.Shaaeri</div>
+        <div>{settings?.company_name || 'راهنمای تلفن سازمانی'}</div>
         <div className="text-black font-bold text-[10px]">
           صفحه {toPersianDigits(pageIndex + 1)} از {toPersianDigits(totalPages)}
         </div>
