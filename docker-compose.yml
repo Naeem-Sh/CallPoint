@@ -6,15 +6,18 @@ services:
     container_name: org_phonebook
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "4400:4400"
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=4400
+      - STORAGE_PATH=/app/storage
     volumes:
-      # Persistent storage for JSON database, employee avatars, company assets, and automated backups
-      - ./storage:/app/storage
+      # ذخیره دائم داده‌ها در مسیری کاملاً خارج از پوشه پروژه تا با حذف یا آپدیت کدها هیچ داده‌ای از دست نرود
+      # Stores data in a directory outside the project folder (e.g. ../org-phonebook-data)
+      # You can also customize this path by setting STORAGE_PATH in your .env file
+      - ${STORAGE_PATH:-../org-phonebook-data}:/app/storage
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:4400/api/health || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3

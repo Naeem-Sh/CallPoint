@@ -27,7 +27,7 @@ import {
 
 interface EmployeeProfileModalProps {
   employee: Employee | null;
-  fields: DynamicFieldDefinition[];
+  fields?: DynamicFieldDefinition[];
   departments: Department[];
   positions: Position[];
   locations: LocationItem[];
@@ -39,7 +39,7 @@ interface EmployeeProfileModalProps {
 
 export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({
   employee,
-  fields,
+  fields = [],
   departments,
   positions,
   locations,

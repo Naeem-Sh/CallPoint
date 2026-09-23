@@ -25,12 +25,8 @@ import {
   Camera,
   FileCode,
   FileSpreadsheet,
-  Calendar,
-  Timer,
-  Check,
-  Zap,
-  Sliders,
-  Sparkles
+  Folder,
+  FolderTree,
 } from 'lucide-react';
 
 interface BackupItem {
@@ -44,17 +40,7 @@ interface BackupItem {
   photo_count?: number;
   json_count?: number;
   has_excel_export?: boolean;
-}
-
-interface AutoBackupScheduleState {
-  enabled: boolean;
-  frequency: 'weekly' | 'daily' | 'monthly';
-  day_of_week: number;
-  day_of_week_name: string;
-  time: string;
-  last_run: string | null;
-  next_run: string;
-  is_running: boolean;
+  storage_path?: string;
 }
 
 interface AdminBackupProps {
@@ -63,6 +49,8 @@ interface AdminBackupProps {
 
 export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
   const [backups, setBackups] = useState<BackupItem[]>([]);
+  const [backupsDirectory, setBackupsDirectory] = useState<string>('');
+  const [storageDirectory, setStorageDirectory] = useState<string>('');
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState<string | null>(null);
@@ -70,22 +58,6 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  // Auto-backup schedule state
-  const [schedule, setSchedule] = useState<AutoBackupScheduleState>({
-    enabled: true,
-    frequency: 'weekly',
-    day_of_week: 5,
-    day_of_week_name: 'جمعه',
-    time: '02:00',
-    last_run: null,
-    next_run: new Date().toISOString(),
-    is_running: false,
-  });
-  const [scheduleLoading, setScheduleLoading] = useState(false);
-  const [scheduleSaving, setScheduleSaving] = useState(false);
-  const [scheduleTesting, setScheduleTesting] = useState(false);
-  const [scheduleSuccess, setScheduleSuccess] = useState<string | null>(null);
 
   // In-App Modals State (replaces blocked window.confirm in iframe)
   const [confirmRestoreItem, setConfirmRestoreItem] = useState<BackupItem | null>(null);
@@ -99,6 +71,12 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
       const res = await api.getBackupList();
       const list = Array.isArray(res) ? res : (res.backups || res.list || []);
       setBackups(list);
+      if (res && res.backups_directory) {
+        setBackupsDirectory(res.backups_directory);
+      }
+      if (res && res.storage_directory) {
+        setStorageDirectory(res.storage_directory);
+      }
     } catch (err: any) {
       setError(err.message || 'خطا در دریافت لیست بکاپ‌ها');
     } finally {
@@ -106,64 +84,9 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
     }
   };
 
-  const fetchSchedule = async () => {
-    try {
-      setScheduleLoading(true);
-      const res = await api.getBackupSchedule();
-      if (res && typeof res === 'object') {
-        setSchedule(res);
-      }
-    } catch (err: any) {
-      console.warn('Error fetching backup schedule:', err);
-    } finally {
-      setScheduleLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchBackups();
-    fetchSchedule();
   }, []);
-
-  const handleSaveSchedule = async (overrideData?: Partial<AutoBackupScheduleState>) => {
-    setScheduleSaving(true);
-    setError(null);
-    setScheduleSuccess(null);
-    try {
-      const dataToSave = {
-        auto_backup_enabled: overrideData?.enabled !== undefined ? overrideData.enabled : schedule.enabled,
-        auto_backup_frequency: overrideData?.frequency || schedule.frequency,
-        auto_backup_day_of_week: overrideData?.day_of_week !== undefined ? overrideData.day_of_week : schedule.day_of_week,
-        auto_backup_time: overrideData?.time || schedule.time,
-      };
-      const res = await api.updateBackupSchedule(dataToSave);
-      if (res.schedule) {
-        setSchedule(res.schedule);
-      }
-      setScheduleSuccess('تنظیمات زمان‌بندی پشتیبان خودکار با موفقیت ذخیره شد.');
-      setTimeout(() => setScheduleSuccess(null), 4000);
-    } catch (err: any) {
-      setError(err.message || 'خطا در ذخیره تنظیمات زمان‌بندی');
-    } finally {
-      setScheduleSaving(false);
-    }
-  };
-
-  const handleTriggerAutoBackupTest = async () => {
-    setScheduleTesting(true);
-    setError(null);
-    try {
-      const res = await api.triggerAutoBackupNow();
-      setSuccess(`پشتیبان خودکار با موفقیت اجرا شد: ${res.filename || 'فایل پشتیبان'}`);
-      await fetchBackups();
-      await fetchSchedule();
-      setTimeout(() => setSuccess(null), 5000);
-    } catch (err: any) {
-      setError(err.message || 'خطا در اجرای فوری پشتیبان خودکار');
-    } finally {
-      setScheduleTesting(false);
-    }
-  };
 
   const handleCreateBackup = async () => {
     setLoading(true);
@@ -281,54 +204,57 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
 
   const totalBytes = backups.reduce((sum, b) => sum + (b.size || 0), 0);
 
-  const daysOfWeekList = [
-    { value: 6, label: 'شنبه' },
-    { value: 0, label: 'یکشنبه' },
-    { value: 1, label: 'دوشنبه' },
-    { value: 2, label: 'سه‌شنبه' },
-    { value: 3, label: 'چهارشنبه' },
-    { value: 4, label: 'پنج‌شنبه' },
-    { value: 5, label: 'جمعه (پیش‌فرض سازمان)' },
-  ];
-
-  const timeOptions = [
-    { value: '00:00', label: '۰۰:۰۰ (نیمه‌شب)' },
-    { value: '01:00', label: '۰۱:۰۰ بامداد' },
-    { value: '02:00', label: '۰۲:۰۰ بامداد (پیشنهادی)' },
-    { value: '03:00', label: '۰۳:۰۰ بامداد' },
-    { value: '04:00', label: '۰۴:۰۰ صبح' },
-    { value: '05:00', label: '۰۵:۰۰ صبح' },
-    { value: '12:00', label: '۱۲:۰۰ ظهر' },
-    { value: '18:00', label: '۱۸:۰۰ عصر' },
-    { value: '22:00', label: '۲۲:۰۰ شب' },
-  ];
-
-  const isAutoBackupComment = (comment?: string) => {
-    if (!comment) return false;
-    const norm = comment.toLowerCase();
-    return norm.includes('خودکار') || norm.includes('auto') || norm.includes('هفتگی') || norm.includes('weekly');
-  };
-
   return (
     <div className="space-y-6">
-      {/* Safety & Retention Notice */}
-      <div className="p-4 rounded-3xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <ShieldCheck className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-          <div>
-            <h4 className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
-              <span>سامانه پشتیبان‌گیری اتمیک و خودمحافظت (Self-Healing Storage)</span>
-            </h4>
-            <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-0.5 leading-relaxed">
-              تمامی داده‌ها، تصاویر پرسنل و خروجی جامع اکسل کارکنان در بسته‌های ZIP فشرده ذخیره می‌شوند. قبل از هر بازیابی نیز یک نسخه ایمن به صورت خودکار تهیه می‌شود.
-            </p>
+      {/* Safety & Retention Notice + Storage Path */}
+      <div className="p-4 rounded-3xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <ShieldCheck className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
+                <span>سامانه پشتیبان‌گیری اتمیک و خودمحافظت (Self-Healing Storage)</span>
+              </h4>
+              <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-0.5 leading-relaxed">
+                تمامی داده‌ها، تصاویر پرسنل با شماره پرسنلی و خروجی جامع اکسل کارکنان در بسته‌های ZIP فشرده ذخیره می‌شوند.
+              </p>
+            </div>
+          </div>
+
+          {/* 20 Max Backups Policy Badge */}
+          <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100/70 dark:bg-amber-900/50 border border-amber-300/80 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs font-bold">
+            <Layers className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" />
+            <span>سیاست نگهداری: حداکثر ۲۰ نسخه (حذف خودکار از آخر)</span>
           </div>
         </div>
 
-        {/* 20 Max Backups Policy Badge */}
-        <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100/70 dark:bg-amber-900/50 border border-amber-300/80 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs font-bold">
-          <Layers className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" />
-          <span>سیاست نگهداری: حداکثر ۲۰ نسخه (حذف خودکار از آخر)</span>
+        {/* Storage Location Path */}
+        <div className="pt-2.5 border-t border-amber-200/60 dark:border-amber-800/40 space-y-1.5 text-[11px]">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-amber-900 dark:text-amber-200 font-medium">
+              <FolderTree className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>پایگاه دائمی داده‌ها و تصاویر (Persistent Storage):</span>
+              <code className="px-2 py-0.5 rounded-lg bg-amber-200/50 dark:bg-amber-900/60 text-amber-950 dark:text-amber-100 font-mono text-[10px] select-all dir-ltr text-left">
+                {storageDirectory || 'storage'}
+              </code>
+            </div>
+            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300/70 dark:border-emerald-800">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              ذخیره‌سازی دائم خارج از کانتینر فعال است (حجم متصل به هاست)
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-amber-800/90 dark:text-amber-300">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              <span>مسیر آرشیو فایل‌های پشتیبان:</span>
+              <code className="px-2 py-0.5 rounded-lg bg-amber-200/40 dark:bg-amber-900/40 text-amber-950 dark:text-amber-100 font-mono text-[10px] select-all dir-ltr text-left">
+                {backupsDirectory || 'storage/backups'}
+              </code>
+            </div>
+            <span className="text-[10px] text-amber-700/80 dark:text-amber-400">
+              فایل‌ها با پیشوند <strong className="font-semibold text-amber-900 dark:text-amber-200">Backup_CallPoint</strong> نام‌گذاری می‌شوند.
+            </span>
+          </div>
         </div>
       </div>
 
@@ -345,175 +271,6 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
           <span>{success}</span>
         </div>
       )}
-
-      {/* ===================== AUTOMATIC BACKUP SCHEDULER PANEL ===================== */}
-      <div className="bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-950 text-white rounded-3xl p-5 border border-indigo-700/50 shadow-lg relative overflow-hidden">
-        {/* Background Subtle Ambient Glow */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-        <div className="absolute bottom-0 left-0 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
-
-        <div className="relative z-10 space-y-4">
-          {/* Header & Status */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-indigo-800/60">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 shrink-0">
-                <Calendar className="w-5 h-5 text-indigo-300" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <span>پشتیبان‌گیری خودکار هفتگی</span>
-                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                  </h3>
-                  {schedule.enabled ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold border border-emerald-500/40">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                      <span>فعال و در حال اجرا</span>
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[11px] font-bold border border-rose-500/40">
-                      <span>غیرفعال</span>
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-indigo-200/80 mt-0.5">
-                  تهیه خودکار و زمان‌بندی‌شده پشتیبان کامل از تمامی اطلاعات، عکس‌ها و اکسل کارکنان به صورت هفتگی
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Status / Test Button */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleTriggerAutoBackupTest}
-                disabled={scheduleTesting}
-                className="px-3.5 py-2 rounded-xl bg-indigo-600/60 hover:bg-indigo-600 text-indigo-100 hover:text-white border border-indigo-400/40 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-                title="تست فوری ایجاد یک بکاپ خودکار همین حالا"
-              >
-                {scheduleTesting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-300" />}
-                <span>اجرای فوری بکاپ خودکار</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Configuration Form Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-center">
-            {/* Toggle Enable/Disable */}
-            <div className="md:col-span-3 bg-indigo-950/70 rounded-2xl p-3 border border-indigo-800/60 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-white block">وضعیت پشتیبان خودکار</span>
-                <span className="text-[11px] text-indigo-300">
-                  {schedule.enabled ? 'پشتیبان هفتگی فعال' : 'غیرفعال شده'}
-                </span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={schedule.enabled}
-                  onChange={(e) => {
-                    const nextVal = e.target.checked;
-                    setSchedule(prev => ({ ...prev, enabled: nextVal }));
-                    handleSaveSchedule({ enabled: nextVal });
-                  }}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-              </label>
-            </div>
-
-            {/* Frequency Selector */}
-            <div className="md:col-span-3 bg-indigo-950/70 rounded-2xl p-2.5 border border-indigo-800/60">
-              <label className="text-[11px] text-indigo-300 font-bold block mb-1">دوره تناوب پشتیبان‌گیری</label>
-              <select
-                value={schedule.frequency}
-                onChange={(e) => {
-                  const freq = e.target.value as 'weekly' | 'daily' | 'monthly';
-                  setSchedule(prev => ({ ...prev, frequency: freq }));
-                }}
-                className="w-full bg-slate-900 border border-indigo-700/80 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-indigo-400"
-              >
-                <option value="weekly">هفتگی (یک بار در هر هفته - استاندارد)</option>
-                <option value="daily">روزانه (یک بار در هر روز)</option>
-                <option value="monthly">ماهانه (یک بار در ماه)</option>
-              </select>
-            </div>
-
-            {/* Day of Week (for weekly mode) */}
-            <div className="md:col-span-3 bg-indigo-950/70 rounded-2xl p-2.5 border border-indigo-800/60">
-              <label className="text-[11px] text-indigo-300 font-bold block mb-1">روز هفته برای بکاپ هفتگی</label>
-              <select
-                value={schedule.day_of_week}
-                disabled={schedule.frequency !== 'weekly'}
-                onChange={(e) => {
-                  const day = parseInt(e.target.value, 10);
-                  setSchedule(prev => ({ ...prev, day_of_week: day }));
-                }}
-                className="w-full bg-slate-900 border border-indigo-700/80 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-indigo-400 disabled:opacity-50"
-              >
-                {daysOfWeekList.map(d => (
-                  <option key={d.value} value={d.value}>{d.label}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Time of Day */}
-            <div className="md:col-span-3 bg-indigo-950/70 rounded-2xl p-2.5 border border-indigo-800/60">
-              <label className="text-[11px] text-indigo-300 font-bold block mb-1">ساعت اجرای خودکار</label>
-              <select
-                value={schedule.time}
-                onChange={(e) => {
-                  setSchedule(prev => ({ ...prev, time: e.target.value }));
-                }}
-                className="w-full bg-slate-900 border border-indigo-700/80 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-indigo-400"
-              >
-                {timeOptions.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Schedule Footer Status & Save Button */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-            <div className="flex items-center gap-3 text-[11px] text-indigo-200/90 flex-wrap">
-              <span className="flex items-center gap-1.5">
-                <Timer className="w-3.5 h-3.5 text-emerald-400" />
-                <span>زمان پشتیبان بعدی:</span>
-                <strong className="text-white font-bold">
-                  {schedule.enabled ? formatPersianDateTime(schedule.next_run) : 'غیرفعال'}
-                </strong>
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-indigo-300" />
-                <span>آخرین پشتیبان خودکار:</span>
-                <span className="text-white">
-                  {schedule.last_run ? formatPersianDateTime(schedule.last_run) : 'تاکنون اجرا نشده'}
-                </span>
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {scheduleSuccess && (
-                <span className="text-xs text-emerald-300 flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5" />
-                  <span>{scheduleSuccess}</span>
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => handleSaveSchedule()}
-                disabled={scheduleSaving}
-                className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                {scheduleSaving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                <span>ذخیره تنظیمات زمان‌بندی</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Manual Backup Action Bar */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs">
@@ -583,7 +340,6 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
               type="button"
               onClick={() => {
                 fetchBackups();
-                fetchSchedule();
               }}
               disabled={loading}
               className="p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 transition-colors flex items-center gap-1 text-xs cursor-pointer"
@@ -602,15 +358,14 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
             </div>
           ) : (
             filteredBackups.map((b, idx) => {
-              const isAuto = isAutoBackupComment(b.comment);
               return (
                 <div
                   key={b.filename}
                   className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`p-2.5 rounded-2xl ${isAuto ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' : 'bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400'} shrink-0 mt-0.5 relative`}>
-                      {isAuto ? <Calendar className="w-5 h-5" /> : <FileArchive className="w-5 h-5" />}
+                    <div className="p-2.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5 relative">
+                      <FileArchive className="w-5 h-5" />
                       <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center">
                         {toPersianDigits(idx + 1)}
                       </span>
@@ -620,12 +375,6 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
                         <span className="text-xs font-bold font-mono text-slate-800 dark:text-slate-200 select-all">
                           {b.filename}
                         </span>
-                        {isAuto && (
-                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-bold border border-emerald-300 dark:border-emerald-700">
-                            <Sparkles className="w-3 h-3 text-emerald-600 dark:text-emerald-300" />
-                            <span>بکاپ خودکار هفتگی</span>
-                          </span>
-                        )}
                         {b.employee_count !== undefined && (
                           <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg font-bold ${
                             b.employee_count > 0 
@@ -666,7 +415,7 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
                             <span>اکسل</span>
                           </span>
                         )}
-                        {b.comment && !isAuto && (
+                        {b.comment && (
                           <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-medium">
                             <MessageSquare className="w-3 h-3" />
                             <span>{b.comment}</span>
@@ -678,6 +427,14 @@ export const AdminBackup: React.FC<AdminBackupProps> = ({ onRefreshAll }) => {
                         <span>{formatPersianDateTime(b.created_at)}</span>
                         <span>•</span>
                         <span>حجم: {formatSize(b.size)}</span>
+                        {b.storage_path && (
+                          <>
+                            <span>•</span>
+                            <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 dir-ltr bg-slate-100 dark:bg-slate-800/80 px-1.5 py-0.5 rounded" title="مسیر کامل ذخیره‌سازی فایل">
+                              {b.storage_path}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

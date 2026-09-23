@@ -184,9 +184,9 @@ export const AdminEmployees: React.FC<AdminEmployeesProps> = ({
       emp.phones && emp.phones.length > 0
         ? emp.phones
         : [
-            { id: '1', type: 'extension', label: 'داخلی', number: emp.extension || '', primary: true },
-            ...(emp.direct_phone ? [{ id: '2', type: 'office', label: 'مستقیم', number: emp.direct_phone, primary: false }] : []),
-            ...(emp.mobile ? [{ id: '3', type: 'mobile', label: 'همراه', number: emp.mobile, primary: false }] : []),
+            { id: '1', type: 'extension' as const, label: 'داخلی', number: emp.extension || '', primary: true },
+            ...(emp.direct_phone ? [{ id: '2', type: 'office' as const, label: 'مستقیم', number: emp.direct_phone, primary: false }] : []),
+            ...(emp.mobile ? [{ id: '3', type: 'mobile' as const, label: 'همراه', number: emp.mobile, primary: false }] : []),
           ]
     );
     setAvatarPreview(emp.avatar || null);

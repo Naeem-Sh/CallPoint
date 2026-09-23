@@ -3,6 +3,7 @@ import { getHighResImageUrl, getDefaultAvatar } from '../utils/image.ts';
 
 interface MeteorAvatarProps {
   src?: string | null;
+  avatarUrl?: string | null;
   alt?: string;
   name?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -41,6 +42,7 @@ const sizeConfig = {
 
 export const MeteorAvatar: React.FC<MeteorAvatarProps> = ({
   src,
+  avatarUrl,
   alt = '',
   name = '',
   size = 'md',
@@ -48,6 +50,7 @@ export const MeteorAvatar: React.FC<MeteorAvatarProps> = ({
   className = '',
   showMeteor = true,
 }) => {
+  const imageSource = src || avatarUrl;
   const config = sizeConfig[size] || sizeConfig.md;
   const roundedClass = shape === 'circle' ? 'rounded-full' : size === 'sm' ? 'rounded-xl' : size === 'md' ? 'rounded-2xl' : 'rounded-3xl';
 
@@ -55,7 +58,7 @@ export const MeteorAvatar: React.FC<MeteorAvatarProps> = ({
   const defaultAvatar = getDefaultAvatar();
   
   const [currentSrc, setCurrentSrc] = useState<string | undefined>(() => {
-    return getHighResImageUrl(src) || getHighResImageUrl(defaultAvatar);
+    return getHighResImageUrl(imageSource) || getHighResImageUrl(defaultAvatar);
   });
   const [hasError, setHasError] = useState(false);
 

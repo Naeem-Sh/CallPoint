@@ -24,6 +24,11 @@ import {
   X,
   User,
   Image as ImageIcon,
+  Eye,
+  Sun,
+  Moon,
+  Sparkles,
+  Printer,
 } from 'lucide-react';
 
 interface AdminSettingsAndUsersProps {
@@ -38,12 +43,16 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
   onOpenResetModal,
 }) => {
   const [formData, setFormData] = useState<Partial<AppSettings>>({
+    header_title: 'دفتر تلفن',
     organization_name: '',
     subtitle: '',
     timezone: 'Asia/Tehran',
     session_timeout_minutes: 60,
     search_debounce_ms: 300,
   });
+
+  const [previewLogoUrl, setPreviewLogoUrl] = useState<string | null>(null);
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light');
 
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,12 +75,14 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
   useEffect(() => {
     if (settings) {
       setFormData({
-        organization_name: settings.organization_name,
-        subtitle: settings.subtitle,
-        timezone: settings.timezone,
-        session_timeout_minutes: settings.session_timeout_minutes,
-        search_debounce_ms: settings.search_debounce_ms,
+        header_title: settings.header_title || 'دفتر تلفن',
+        organization_name: settings.organization_name || '',
+        subtitle: settings.subtitle || '',
+        timezone: settings.timezone || 'Asia/Tehran',
+        session_timeout_minutes: settings.session_timeout_minutes || 60,
+        search_debounce_ms: settings.search_debounce_ms || 300,
       });
+      setPreviewLogoUrl(settings.logo_url || null);
     }
     fetchUsers();
   }, [settings]);
@@ -109,18 +120,26 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Instant local preview for zero-delay visual feedback
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewLogoUrl(objectUrl);
+
     const fd = new FormData();
     fd.append('logo', file);
 
     setLoading(true);
     setError(null);
     try {
-      await api.uploadLogo(fd);
+      const res = await api.uploadLogo(fd);
       setSuccess('لوگوی سازمان با موفقیت به‌روزرسانی شد.');
+      if (res && res.logo_url) {
+        setPreviewLogoUrl(res.logo_url);
+      }
       onRefreshSettings();
       setTimeout(() => setSuccess(null), 3500);
     } catch (err: any) {
       setError(err.message || 'خطا در بارگذاری لوگو');
+      setPreviewLogoUrl(settings?.logo_url || null);
     } finally {
       setLoading(false);
     }
@@ -129,6 +148,7 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
   const handleDeleteLogo = async () => {
     if (!confirm('آیا از حذف لوگوی اختصاصی سازمان اطمینان دارید؟')) return;
 
+    setPreviewLogoUrl(null);
     setLoading(true);
     setError(null);
     try {
@@ -138,6 +158,7 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
       setTimeout(() => setSuccess(null), 3500);
     } catch (err: any) {
       setError(err.message || 'خطا در حذف لوگو');
+      setPreviewLogoUrl(settings?.logo_url || null);
     } finally {
       setLoading(false);
     }
@@ -309,14 +330,180 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
         </div>
       )}
 
+      {/* ================= LIVE HEADER PREVIEW ================= */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4">
+        {/* Preview Card Header with Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+              <Eye className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                  پیش‌نمایش زنده هدر صفحه اصلی
+                </h3>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/60">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  بروزرسانی همگام
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                تغییرات عنوان، نام سازمان و نشان رسمی بلافاصله در پیش‌نمایش زیر قابل مشاهده است
+              </p>
+            </div>
+          </div>
+
+          {/* Theme preview toggle (Light / Dark) */}
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium hidden sm:inline">
+              بررسی در پوسته:
+            </span>
+            <div className="flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">
+              <button
+                type="button"
+                onClick={() => setPreviewTheme('light')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  previewTheme === 'light'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                }`}
+                title="نمایش در حالت روشن"
+              >
+                <Sun className={`w-3.5 h-3.5 ${previewTheme === 'light' ? 'text-amber-500' : ''}`} />
+                <span>روشن</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewTheme('dark')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  previewTheme === 'dark'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                }`}
+                title="نمایش در حالت تاریک"
+              >
+                <Moon className={`w-3.5 h-3.5 ${previewTheme === 'dark' ? 'text-indigo-400' : ''}`} />
+                <span>تاریک</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Live Header Simulation Frame */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between px-2 text-[10px] text-slate-400 font-mono">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-red-400"></span>
+              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span className="mr-2 font-sans font-medium text-slate-500 dark:text-slate-400">سربرگ بالای صفحه اصلی سامانه</span>
+            </span>
+            <span className="dir-ltr text-slate-400 font-medium">Header Component Preview</span>
+          </div>
+
+          <div
+            className={`rounded-2xl border transition-colors duration-200 shadow-sm overflow-hidden p-3.5 sm:p-5 ${
+              previewTheme === 'dark'
+                ? 'bg-slate-900/95 border-slate-800 text-white'
+                : 'bg-white/95 border-slate-200 text-slate-900'
+            }`}
+          >
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              {/* Logo & Titles */}
+              <div className="flex items-center gap-3.5 sm:gap-4 w-full md:w-auto justify-between md:justify-start">
+                <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                  {previewLogoUrl ? (
+                    <img
+                      src={previewLogoUrl}
+                      alt="لوگوی سازمان"
+                      referrerPolicy="no-referrer"
+                      className="h-14 w-auto max-w-[90px] sm:h-16 sm:max-w-[120px] object-contain shrink-0 select-none transition-transform hover:scale-105"
+                    />
+                  ) : (
+                    <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 text-white flex items-center justify-center shadow-lg shadow-indigo-600/25 border-2 border-indigo-500/30 shrink-0 transition-transform hover:scale-105">
+                      <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-100" />
+                    </div>
+                  )}
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-lg sm:text-xl font-black tracking-tight flex items-center flex-wrap gap-x-2">
+                        <span>{formData.header_title?.trim() || 'دفتر تلفن'}</span>
+                        {formData.organization_name?.trim() ? (
+                          <span className="text-sm sm:text-base font-bold text-indigo-600 dark:text-indigo-400">
+                            | {formData.organization_name.trim()}
+                          </span>
+                        ) : null}
+                      </h1>
+                    </div>
+                    <p
+                      className={`text-xs sm:text-sm font-semibold mt-0.5 max-w-[260px] sm:max-w-lg truncate ${
+                        previewTheme === 'dark' ? 'text-slate-300' : 'text-slate-600'
+                      }`}
+                    >
+                      {formData.subtitle?.trim() || (formData.organization_name?.trim() ? 'سامانه جامع راهنمای تلفن و اطلاعات کارکنان' : 'سامانه جامع راهنمای تلفن و اطلاعات کارکنان')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Simulated Action Controls */}
+              <div className="hidden sm:flex items-center gap-2 shrink-0">
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${
+                    previewTheme === 'dark'
+                      ? 'bg-indigo-950/70 text-indigo-300 border-indigo-800/80'
+                      : 'bg-indigo-50 text-indigo-700 border-indigo-200/80'
+                  }`}
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>چاپ</span>
+                </div>
+
+                <div
+                  className={`p-2 rounded-xl border ${
+                    previewTheme === 'dark'
+                      ? 'bg-slate-800 text-slate-300 border-slate-700'
+                      : 'bg-slate-100 text-slate-600 border-slate-200'
+                  }`}
+                >
+                  {previewTheme === 'dark' ? <Moon className="w-4 h-4 text-amber-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
+                </div>
+
+                <div className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-xs">
+                  مدیریت
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Informative Note */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+            <span>با تغییر عنوان، نام سازمان، زیرعنوان یا بارگذاری نشان در فرم زیر، پیش‌نمایش بالا بی‌درنگ به‌روز می‌شود.</span>
+          </div>
+          <span className="text-indigo-600 dark:text-indigo-400 font-medium">
+            تغییرات با کلیک روی «ذخیره تنظیمات سازمان» نهایی خواهند شد.
+          </span>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Organization Brand & Logo */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-5">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-            <Building2 className="w-5 h-5 text-indigo-600" />
-            <h3 className="text-sm font-black text-slate-900 dark:text-white">
-              هویت و اطلاعات سازمانی
-            </h3>
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                هویت و اطلاعات سازمانی
+              </h3>
+            </div>
+            <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full border border-indigo-200/50">
+              متصل به پیش‌نمایش زنده
+            </span>
           </div>
 
           {/* 1. Organization Logo */}
@@ -325,9 +512,9 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
               نشان و لوگوی رسمی سازمان
             </label>
             <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800">
-              {settings?.logo_url ? (
+              {previewLogoUrl || settings?.logo_url ? (
                 <img
-                  src={settings.logo_url}
+                  src={previewLogoUrl || settings?.logo_url || ''}
                   alt="لوگو"
                   className="w-16 h-16 object-contain select-none bg-white dark:bg-slate-900 rounded-xl p-1 border border-slate-200 dark:border-slate-800"
                 />
@@ -349,7 +536,7 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
                   />
                 </label>
 
-                {settings?.logo_url && (
+                {(previewLogoUrl || settings?.logo_url) && (
                   <button
                     type="button"
                     onClick={handleDeleteLogo}
@@ -451,6 +638,20 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
           </div>
 
           <form onSubmit={handleSaveSettings} className="space-y-4 pt-2">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                <span>عنوان اصلی سربرگ (هدر)</span>
+                <span className="text-[10px] text-slate-400 font-normal">پیش‌فرض: «دفتر تلفن»</span>
+              </label>
+              <input
+                type="text"
+                value={formData.header_title || ''}
+                placeholder="دفتر تلفن"
+                onChange={(e) => setFormData({ ...formData, header_title: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                 نام رسمی سازمان

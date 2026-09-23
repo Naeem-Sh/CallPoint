@@ -1,7 +1,7 @@
 {
   "name": "org-phonebook",
   "description": "Enterprise organization phonebook, employee directory, and extension management system with persistent storage and Docker support",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": true,
   "author": "shaaeri <shaaeri@gmail.com>",
   "license": "MIT",
@@ -34,14 +34,15 @@
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
-    "@types/adm-zip": "^0.5.8",
-    "@types/bcryptjs": "^3.0.0",
-    "@types/multer": "^2.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "adm-zip": "^0.6.0",
     "bcryptjs": "^3.0.3",

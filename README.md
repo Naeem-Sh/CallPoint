@@ -93,10 +93,11 @@ storage/
 └── imports/ & exports/         # Temporary Excel spreadsheets during data exchange
 ```
 
-### Data Integrity Safeguards
-1. **Atomic File Writes**: Records are serialized to temporary files (`.tmp`) before being renamed atomically via the operating system's filesystem (`fs.rename`).
-2. **Mutex Queuing**: Serialized asynchronous queues prevent race conditions and concurrent write hazards.
-3. **Persistent Volume Binding**: In Docker, mapping `./storage:/app/storage` guarantees 100% persistence across container rebuilds, upgrades, and restarts.
+### Data Integrity & External Storage Safeguards
+1. **Isolated External Storage**: By default, persistent data is stored in a directory **outside the application code repository** (e.g. `../org-phonebook-data` or `/var/lib/org-phonebook`). Even if you delete the entire project folder, perform a fresh `git pull`, or rebuild container images, **your data, user accounts, photos, and backups remain 100% intact**.
+2. **Atomic File Writes**: Records are serialized to temporary files (`.tmp`) before being renamed atomically via the operating system's filesystem (`fs.rename`).
+3. **Mutex Queuing**: Serialized asynchronous queues prevent race conditions and concurrent write hazards.
+4. **Persistent Volume Binding**: In Docker, mapping `${STORAGE_PATH:-../org-phonebook-data}:/app/storage` guarantees continuous persistence across container updates and removals.
 
 ---
 
@@ -116,7 +117,7 @@ docker compose up -d --build
 ```
 
 Access the application in your browser at:
-👉 **[http://localhost:3000](http://localhost:3000)**
+👉 **[http://localhost:4400](http://localhost:4400)**
 
 #### Useful Docker Compose Commands:
 ```bash
@@ -141,11 +142,11 @@ docker compose restart
 # Build the optimized multi-stage image
 docker build -t org-phonebook:latest .
 
-# Run the container with persistent storage volume
+# Run the container with persistent storage located outside the project directory
 docker run -d \
   --name org_phonebook \
-  -p 3000:3000 \
-  -v $(pwd)/storage:/app/storage \
+  -p 4400:4400 \
+  -v $(pwd)/../org-phonebook-data:/app/storage \
   --restart unless-stopped \
   org-phonebook:latest
 ```
@@ -197,8 +198,8 @@ cp .env.example .env
 | Variable | Description | Default |
 | :--- | :--- | :--- |
 | `NODE_ENV` | Runtime mode (`development` or `production`) | `production` |
-| `PORT` | HTTP port exposed by the Express server | `3000` |
-| `APP_URL` | Canonical URL of the application deployment | `http://localhost:3000` |
+| `PORT` | HTTP port exposed by the Express server | `4400` |
+| `APP_URL` | Canonical URL of the application deployment | `http://localhost:4400` |
 | `GEMINI_API_KEY` | Optional API key for Google Gemini AI features | `""` |
 
 ---

@@ -140,7 +140,6 @@ export function generateFullExcelBuffer(options: ExcelExportOptions): Buffer {
   const deptMap = new Map(departments.map(d => [d.id, d.name]));
   const deptCodeMap = new Map(departments.map(d => [d.id, d.code]));
   const posMap = new Map(positions.map(p => [p.id, p.title]));
-  const posLevelMap = new Map(positions.map(p => [p.id, p.level || '']));
   const locMap = new Map(locations.map(l => [l.id, l.name]));
   const locBuildingMap = new Map(locations.map(l => [l.id, l.building || '']));
   const locFloorMap = new Map(locations.map(l => [l.id, l.floor || '']));
@@ -177,7 +176,6 @@ export function generateFullExcelBuffer(options: ExcelExportOptions): Buffer {
       'واحد سازمانی': 'مدیریت و حوزه ریاست',
       'کد واحد سازمانی': '100',
       'سمت سازمانی': 'مدیر عامل و رئیس هیئت مدیره',
-      'سطح سمت سازمانی': 'مدیریت ارشد',
     };
 
     for (let i = 1; i <= maxExtCols; i++) {
@@ -226,7 +224,6 @@ export function generateFullExcelBuffer(options: ExcelExportOptions): Buffer {
       const deptName = deptMap.get(emp.department_id) || emp.department_id || '';
       const deptCode = deptCodeMap.get(emp.department_id) || '';
       const posTitle = posMap.get(emp.position_id) || emp.position_id || '';
-      const posLevel = posLevelMap.get(emp.position_id) || '';
       const locName = locMap.get(emp.location_id) || emp.location_id || '';
       const building = emp.building || locBuildingMap.get(emp.location_id) || '';
       const floor = emp.floor || locFloorMap.get(emp.location_id) || '';
@@ -241,7 +238,6 @@ export function generateFullExcelBuffer(options: ExcelExportOptions): Buffer {
         'واحد سازمانی': deptName,
         'کد واحد سازمانی': deptCode,
         'سمت سازمانی': posTitle,
-        'سطح سمت سازمانی': posLevel,
       };
 
       // Separate column for each extension number

@@ -32,14 +32,28 @@ interface AdminExcelProps {
   departments: Department[];
   fields: DynamicFieldDefinition[];
   onRefresh: () => void;
+  activeTab?: 'export' | 'import';
+  onTabChange?: (tab: 'export' | 'import') => void;
+  hideHeaderCard?: boolean;
 }
 
 export const AdminExcel: React.FC<AdminExcelProps> = ({
   departments,
   fields,
   onRefresh,
+  activeTab: controlledTab,
+  onTabChange,
+  hideHeaderCard = false,
 }) => {
-  const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
+  const [internalTab, setInternalTab] = useState<'export' | 'import'>('export');
+  const activeTab = controlledTab !== undefined ? controlledTab : internalTab;
+  const setActiveTab = (tab: 'export' | 'import') => {
+    if (onTabChange) {
+      onTabChange(tab);
+    } else {
+      setInternalTab(tab);
+    }
+  };
 
   // Export states
   const [exportDept, setExportDept] = useState<string>('all');
@@ -480,69 +494,71 @@ export const AdminExcel: React.FC<AdminExcelProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner & Tab Navigation */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5 w-full md:w-auto">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-600/20 shrink-0">
-            <FileSpreadsheet className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-black text-slate-900 dark:text-white">
-                مدیریت ورود و خروجی اکسل (Excel Hub)
-              </h2>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold">
-                شامل تمام فیلدها
-              </span>
+      {!hideHeaderCard && (
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 w-full md:w-auto">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-600/20 shrink-0">
+              <FileSpreadsheet className="w-6 h-6" />
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              خروجی استاندارد با کلیه فیلدهای سازمانی، تطبیق هوشمند ستون‌ها و واردسازی دسته‌ای
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-black text-slate-900 dark:text-white">
+                  مدیریت ورود و خروجی اکسل (Excel Hub)
+                </h2>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold">
+                  شامل تمام فیلدها
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                خروجی استاندارد با کلیه فیلدهای سازمانی، تطبیق هوشمند ستون‌ها و واردسازی دسته‌ای
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2.5 w-full md:w-auto justify-end flex-wrap">
-          {/* Direct Template Download Button */}
-          <button
-            type="button"
-            disabled={templateLoading}
-            onClick={handleDownloadTemplate}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
-            title="دانلود فایل نمونه اکسل جهت مشاهده ساختار استاندارد ستون‌ها"
-          >
-            {templateLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5 text-indigo-500" />}
-            <span>دانلود قالب نمونه اکسل (Template)</span>
-          </button>
-
-          {/* Tab Switchers */}
-          <div className="flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700">
+          <div className="flex items-center gap-2.5 w-full md:w-auto justify-end flex-wrap">
+            {/* Direct Template Download Button */}
             <button
               type="button"
-              onClick={() => setActiveTab('export')}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                activeTab === 'export'
-                  ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+              disabled={templateLoading}
+              onClick={handleDownloadTemplate}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
+              title="دانلود فایل نمونه اکسل جهت مشاهده ساختار استاندارد ستون‌ها"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>خروجی اکسل (Export)</span>
+              {templateLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5 text-indigo-500" />}
+              <span>دانلود قالب نمونه اکسل (Template)</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab('import')}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                activeTab === 'import'
-                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Upload className="w-3.5 h-3.5" />
-              <span>ورود اکسل (Import)</span>
-            </button>
+            {/* Tab Switchers */}
+            <div className="flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setActiveTab('export')}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                  activeTab === 'export'
+                    ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>خروجی اکسل (Export)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('import')}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                  activeTab === 'import'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>ورود اکسل (Import)</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Global Alerts */}
       {error && (
@@ -628,7 +644,6 @@ export const AdminExcel: React.FC<AdminExcelProps> = ({
                     <span className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600">واحد سازمانی</span>
                     <span className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600">کد واحد</span>
                     <span className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600">سمت سازمانی</span>
-                    <span className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600">سطح سمت</span>
                   </div>
                 </div>
 

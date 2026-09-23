@@ -15,21 +15,21 @@ export const INITIAL_DEPARTMENTS: Department[] = [
 ];
 
 export const INITIAL_POSITIONS: Position[] = [
-  { id: 'pos-1', title: 'مدیرعامل', level: 'ارشد', active: true },
-  { id: 'pos-2', title: 'قائم‌مقام مدیرعامل', level: 'ارشد', active: true },
-  { id: 'pos-3', title: 'مدیر واحد', level: 'مدیریت', active: true },
-  { id: 'pos-4', title: 'رئیس اداره', level: 'مدیریت میانی', active: true },
-  { id: 'pos-5', title: 'سرپرست تیم', level: 'کارشناسی', active: true },
-  { id: 'pos-6', title: 'کارشناس ارشد', level: 'کارشناسی', active: true },
-  { id: 'pos-7', title: 'کارشناس', level: 'کارشناسی', active: true },
-  { id: 'pos-8', title: 'کاردان فنی', level: 'فنی', active: true },
-  { id: 'pos-9', title: 'مسئول دفتر', level: 'اداری', active: true },
-  { id: 'pos-10', title: 'مشاور عالی', level: 'تخصصی', active: true },
-  { id: 'pos-11', title: 'کارشناس حقوقی و قراردادها', level: 'کارشناسی', active: true },
-  { id: 'pos-12', title: 'سرپرست بایگانی و دبیرخانه', level: 'اداری', active: true },
-  { id: 'pos-13', title: 'کارشناس هوش مصنوعی و داده', level: 'تخصصی', active: true },
-  { id: 'pos-14', title: 'کارشناس روابط عمومی و رسانه', level: 'کارشناسی', active: true },
-  { id: 'pos-15', title: 'سرپرست کنترل تردد و حراست', level: 'عملیاتی', active: true },
+  { id: 'pos-1', title: 'مدیرعامل', active: true },
+  { id: 'pos-2', title: 'قائم‌مقام مدیرعامل', active: true },
+  { id: 'pos-3', title: 'مدیر واحد', active: true },
+  { id: 'pos-4', title: 'رئیس اداره', active: true },
+  { id: 'pos-5', title: 'سرپرست تیم', active: true },
+  { id: 'pos-6', title: 'کارشناس ارشد', active: true },
+  { id: 'pos-7', title: 'کارشناس', active: true },
+  { id: 'pos-8', title: 'کاردان فنی', active: true },
+  { id: 'pos-9', title: 'مسئول دفتر', active: true },
+  { id: 'pos-10', title: 'مشاور عالی', active: true },
+  { id: 'pos-11', title: 'کارشناس حقوقی و قراردادها', active: true },
+  { id: 'pos-12', title: 'سرپرست بایگانی و دبیرخانه', active: true },
+  { id: 'pos-13', title: 'کارشناس هوش مصنوعی و داده', active: true },
+  { id: 'pos-14', title: 'کارشناس روابط عمومی و رسانه', active: true },
+  { id: 'pos-15', title: 'سرپرست کنترل تردد و حراست', active: true },
 ];
 
 export const INITIAL_LOCATIONS: LocationItem[] = [
@@ -66,6 +66,7 @@ export const INITIAL_FIELDS: DynamicFieldDefinition[] = [
 ];
 
 export const INITIAL_SETTINGS: AppSettings = {
+  header_title: 'دفتر تلفن',
   organization_name: 'سازمان نوآوری و توسعه فناوری',
   sub_title: 'سامانه جامع راهنمای ارتباطات و تلفن پرسنل (شبکه داخلی)',
   subtitle: 'سامانه جامع راهنمای ارتباطات و تلفن پرسنل (شبکه داخلی)',
@@ -78,10 +79,6 @@ export const INITIAL_SETTINGS: AppSettings = {
   theme: 'system',
   contact_info: 'پشتیبانی فنی: داخلی ۲۰۱ | helpdesk@org.ir',
   intranet_banner: 'محرمانه - شبکه داخلی سازمان',
-  auto_backup_enabled: true,
-  auto_backup_frequency: 'weekly',
-  auto_backup_day_of_week: 5, // جمعه (Friday)
-  auto_backup_time: '02:00',
 };
 
 export const INITIAL_USERS: AppUser[] = [

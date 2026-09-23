@@ -11,6 +11,7 @@ export type FieldType =
   | 'boolean'
   | 'select'
   | 'multiselect'
+  | 'multi_select'
   | 'department'
   | 'position'
   | 'location'
@@ -38,7 +39,7 @@ export interface DynamicFieldDefinition {
 
 export interface PhoneNumber {
   id: string;
-  type: 'extension' | 'office' | 'mobile' | 'fax' | 'home' | 'other';
+  type: 'extension' | 'office' | 'direct' | 'phone' | 'mobile' | 'fax' | 'home' | 'other';
   label: string;
   number: string;
   description?: string;
@@ -61,7 +62,6 @@ export interface Position {
   id: string;
   title: string;
   code?: string;
-  level?: string;
   active: boolean;
 }
 
@@ -99,6 +99,7 @@ export interface Employee {
   custom_fields?: Record<string, any>;
   search_count: number;
   print_order?: number; // اولویت و رتبه نمایش و چاپ درون واحد سازمانی
+  is_head_of_department?: boolean;
   created_at: string;
   updated_at: string;
   internal_metadata?: Record<string, any>;
@@ -126,8 +127,10 @@ export interface AppUser {
 
 export interface AppSettings {
   organization_name: string;
+  company_name?: string;
   sub_title?: string;
   subtitle?: string;
+  header_title?: string;
   logo_url: string | null;
   default_avatar?: string | null;
   timezone: string;
@@ -139,12 +142,6 @@ export interface AppSettings {
   intranet_banner?: string;
   session_timeout_minutes?: number;
   search_debounce_ms?: number;
-  // Automatic Scheduled Backup
-  auto_backup_enabled?: boolean;
-  auto_backup_frequency?: 'weekly' | 'daily' | 'monthly';
-  auto_backup_day_of_week?: number; // 0: یکشنبه, 1: دوشنبه, 2: سه‌شنبه, 3: چهارشنبه, 4: پنج‌شنبه, 5: جمعه, 6: شنبه
-  auto_backup_time?: string; // e.g. "02:00"
-  last_auto_backup?: string; // ISO string of last automated backup
 }
 
 export interface SystemStatistics {
@@ -235,4 +232,4 @@ export interface HealthCheckResult {
   checked_at?: string;
 }
 
-export const APP_VERSION = '2.0.0';
+export const APP_VERSION = '2.0.1';

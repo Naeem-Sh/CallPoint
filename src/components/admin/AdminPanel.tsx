@@ -13,9 +13,8 @@ import {
 import { AdminOverview } from './AdminOverview.tsx';
 import { AdminEmployees } from './AdminEmployees.tsx';
 import { AdminDepartments } from './AdminDepartments.tsx';
-import { AdminExcel } from './AdminExcel.tsx';
 import { AdminLocations } from './AdminLocations.tsx';
-import { AdminBackup } from './AdminBackup.tsx';
+import { AdminDataManagement } from './AdminDataManagement.tsx';
 import { AdminAuditAndHealth } from './AdminAuditAndHealth.tsx';
 import { AdminSettingsAndUsers } from './AdminSettingsAndUsers.tsx';
 import { api } from '../../utils/api.ts';
@@ -68,6 +67,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onLogout,
 }) => {
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const [dataSubTab, setDataSubTab] = useState<'export' | 'import' | 'backup'>('export');
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [backupBeforeReset, setBackupBeforeReset] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
@@ -80,8 +80,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     { id: 'employees', label: 'مدیریت کارکنان', icon: Users, adminOnly: false },
     { id: 'departments', label: 'واحدهای سازمانی', icon: Building, adminOnly: false },
     { id: 'locations', label: 'محل‌های استقرار', icon: MapPin, adminOnly: false },
-    { id: 'excel', label: 'ورود و خروجی اکسل', icon: FileSpreadsheet, adminOnly: true },
-    { id: 'backup', label: 'پشتیبان‌گیری و بازیابی', icon: HardDrive, adminOnly: true },
+    { id: 'data', label: 'ورود، خروجی و پشتیبان‌گیری', icon: FileSpreadsheet, adminOnly: true },
     { id: 'audit', label: 'ثبت وقایع (Audit)', icon: ShieldAlert, adminOnly: true },
     { id: 'settings', label: 'تنظیمات و کاربران', icon: Settings, adminOnly: true },
   ];
@@ -89,7 +88,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const tabs = allTabs.filter((tab) => !tab.adminOnly || isAdmin);
 
   // Safety fallback if active tab is restricted
-  const effectiveActiveTab = tabs.some((t) => t.id === activeTab) ? activeTab : 'overview';
+  const effectiveActiveTab = tabs.some((t) => t.id === activeTab)
+    ? activeTab
+    : (activeTab === 'excel' || activeTab === 'backup') ? 'data' : 'overview';
+
+  const handleNavigateTab = (tab: string, subTab?: 'export' | 'import' | 'backup') => {
+    if (tab === 'excel') {
+      setActiveTab('data');
+      setDataSubTab(subTab || 'export');
+    } else if (tab === 'backup') {
+      setActiveTab('data');
+      setDataSubTab('backup');
+    } else {
+      setActiveTab(tab);
+      if (subTab) setDataSubTab(subTab);
+    }
+  };
 
   const handleExecuteReset = async () => {
     setIsResetting(true);
@@ -104,7 +118,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setTimeout(() => {
         setIsResetModalOpen(false);
         setResetMessage(null);
-        setActiveTab('excel'); // Lead admin directly to Excel Import tab!
+        setActiveTab('data');
+        setDataSubTab('import'); // Lead admin directly to Excel Import tab!
       }, 1500);
     } catch (err: any) {
       setResetMessage({
@@ -226,7 +241,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             currentUser={currentUser}
             employees={employees}
             locations={locations}
-            onNavigateTab={(tab) => setActiveTab(tab)}
+            onNavigateTab={handleNavigateTab}
           />
         )}
 
@@ -258,15 +273,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           />
         )}
 
-        {effectiveActiveTab === 'excel' && isAdmin && (
-          <AdminExcel
+        {(effectiveActiveTab === 'data' || effectiveActiveTab === 'excel' || effectiveActiveTab === 'backup') && isAdmin && (
+          <AdminDataManagement
             departments={departments}
             fields={fields}
-            onRefresh={onRefreshAll}
+            onRefreshAll={onRefreshAll}
+            initialSubTab={effectiveActiveTab === 'backup' ? 'backup' : dataSubTab}
           />
         )}
-
-        {effectiveActiveTab === 'backup' && isAdmin && <AdminBackup onRefreshAll={onRefreshAll} />}
 
         {effectiveActiveTab === 'audit' && isAdmin && <AdminAuditAndHealth />}
 

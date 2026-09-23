@@ -1,5 +1,635 @@
 [
   {
+    "id": "log-1790143494869-wursj",
+    "timestamp": "2026-09-23T06:04:54.869Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Update Settings",
+    "target": "System Settings",
+    "details": "تنظیمات کلی سامانه ویرایش شد",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 60,
+      "uptime_sec": 6,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143494751-4164o",
+    "timestamp": "2026-09-23T06:04:54.751Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Create Backup",
+    "target": "Backup_CallPoint_2026-09-23T06-04-53-905Z.zip",
+    "details": "بک‌آپ خودکار تست صحت سیستم",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 131,
+      "uptime_sec": 6,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493754-ol9lk",
+    "timestamp": "2026-09-23T06:04:53.754Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Delete Dynamic Field",
+    "target": "شماره بیمه تکمیلی تست",
+    "details": "شناسه: test_insurance_no",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 132,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493750-nnxo8",
+    "timestamp": "2026-09-23T06:04:53.750Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Add Dynamic Field",
+    "target": "شماره بیمه تکمیلی تست",
+    "details": "نوع: text",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 132,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493744-43ssu",
+    "timestamp": "2026-09-23T06:04:53.744Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Delete Location",
+    "target": "ساختمان آزمایشگاهی تست",
+    "details": "حذف محل استقرار (0 پرسنل منتقل یا بدون محل شد)",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 131,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493734-a5ckf",
+    "timestamp": "2026-09-23T06:04:53.734Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Delete Department",
+    "target": "دپارتمان تست ویرایش‌شده",
+    "details": "کد: D06 (تعداد پرسنل منتقل یا بدون واحد شده: 0)",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 131,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493720-3cl4p",
+    "timestamp": "2026-09-23T06:04:53.720Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Edit Department",
+    "target": "دپارتمان تست ویرایش‌شده",
+    "details": "کد: D06",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 130,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493711-fk80j",
+    "timestamp": "2026-09-23T06:04:53.711Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Create Department",
+    "target": "دپارتمان تست اتوماسیون",
+    "details": "کد: D06",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 130,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493698-u9qby",
+    "timestamp": "2026-09-23T06:04:53.698Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Archive Employee",
+    "target": "تست سیستمی",
+    "details": "انتقال به آرشیو - علت: انتقال به آرشیو توسط مدیر",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 141,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493690-of5ah",
+    "timestamp": "2026-09-23T06:04:53.690Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Restore Employee",
+    "target": "تست سیستمی",
+    "details": "بازیابی از آرشیو",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 140,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493680-12wqb",
+    "timestamp": "2026-09-23T06:04:53.680Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Batch Archive Employees",
+    "target": "1 کارمند",
+    "details": "تعداد کل: 1",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 139,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493670-agw8h",
+    "timestamp": "2026-09-23T06:04:53.670Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Edit Employee",
+    "target": "تست سیستمی",
+    "details": "کد: 8487",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 138,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493661-62wj1",
+    "timestamp": "2026-09-23T06:04:53.661Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Create Employee",
+    "target": "تست سیستمی",
+    "details": "شماره پرسنلی: 8487",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 137,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493647-w7nev",
+    "timestamp": "2026-09-23T06:04:53.647Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login",
+    "target": "Auth",
+    "details": "ورود موفق به سامانه",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 137,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143493541-ujarq",
+    "timestamp": "2026-09-23T06:04:53.541Z",
+    "level": "ERROR",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login Attempt",
+    "target": "Auth",
+    "details": "رمز عبور نامعتبر",
+    "ip": "127.0.0.1",
+    "result": "failed",
+    "status": "failed",
+    "system_state": {
+      "memory_mb": 136,
+      "uptime_sec": 5,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143462444-ykm4w",
+    "timestamp": "2026-09-23T06:04:22.444Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Add Dynamic Field",
+    "target": "فیلد تست",
+    "details": "نوع: text",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 136,
+      "uptime_sec": 10,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143462380-9zqhp",
+    "timestamp": "2026-09-23T06:04:22.380Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login",
+    "target": "Auth",
+    "details": "ورود موفق به سامانه",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 133,
+      "uptime_sec": 10,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143446791-975hb",
+    "timestamp": "2026-09-23T06:04:06.791Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Update Settings",
+    "target": "System Settings",
+    "details": "تنظیمات کلی سامانه ویرایش شد",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 79,
+      "uptime_sec": 253,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143446713-qwkgb",
+    "timestamp": "2026-09-23T06:04:06.713Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Create Backup",
+    "target": "Backup_CallPoint_2026-09-23T06-04-05-802Z.zip",
+    "details": "بک‌آپ خودکار تست صحت سیستم",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 79,
+      "uptime_sec": 253,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143445647-7sqk2",
+    "timestamp": "2026-09-23T06:04:05.647Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Delete Location",
+    "target": "ساختمان آزمایشگاهی تست",
+    "details": "حذف محل استقرار (0 پرسنل منتقل یا بدون محل شد)",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 80,
+      "uptime_sec": 252,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143445628-ukuex",
+    "timestamp": "2026-09-23T06:04:05.628Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login",
+    "target": "Auth",
+    "details": "ورود موفق به سامانه",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 80,
+      "uptime_sec": 252,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143445518-x8o2c",
+    "timestamp": "2026-09-23T06:04:05.518Z",
+    "level": "ERROR",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login Attempt",
+    "target": "Auth",
+    "details": "رمز عبور نامعتبر",
+    "ip": "127.0.0.1",
+    "result": "failed",
+    "status": "failed",
+    "system_state": {
+      "memory_mb": 80,
+      "uptime_sec": 252,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143369882-zgy4b",
+    "timestamp": "2026-09-23T06:02:49.882Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login",
+    "target": "Auth",
+    "details": "ورود موفق به سامانه",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 82,
+      "uptime_sec": 176,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143363110-4iw0p",
+    "timestamp": "2026-09-23T06:02:43.110Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Update Settings",
+    "target": "System Settings",
+    "details": "تنظیمات کلی سامانه ویرایش شد",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 79,
+      "uptime_sec": 170,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143363031-ykvxv",
+    "timestamp": "2026-09-23T06:02:43.031Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Create Backup",
+    "target": "Backup_CallPoint_2026-09-23T06-02-42-133Z.zip",
+    "details": "بک‌آپ خودکار تست صحت سیستم",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 79,
+      "uptime_sec": 170,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143361967-y4s22",
+    "timestamp": "2026-09-23T06:02:41.967Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Delete Location",
+    "target": "ساختمان آزمایشگاهی تست",
+    "details": "حذف محل استقرار (0 پرسنل منتقل یا بدون محل شد)",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 81,
+      "uptime_sec": 169,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143361952-s65vr",
+    "timestamp": "2026-09-23T06:02:41.952Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login",
+    "target": "Auth",
+    "details": "ورود موفق به سامانه",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 81,
+      "uptime_sec": 169,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143361842-uudwn",
+    "timestamp": "2026-09-23T06:02:41.842Z",
+    "level": "ERROR",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login Attempt",
+    "target": "Auth",
+    "details": "رمز عبور نامعتبر",
+    "ip": "127.0.0.1",
+    "result": "failed",
+    "status": "failed",
+    "system_state": {
+      "memory_mb": 82,
+      "uptime_sec": 168,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143323537-5kyjh",
+    "timestamp": "2026-09-23T06:02:03.537Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Update Settings",
+    "target": "System Settings",
+    "details": "تنظیمات کلی سامانه ویرایش شد",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 81,
+      "uptime_sec": 130,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143323493-a0ipx",
+    "timestamp": "2026-09-23T06:02:03.493Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Delete Location",
+    "target": "ساختمان آزمایشگاهی تست",
+    "details": "حذف محل استقرار (0 پرسنل منتقل یا بدون محل شد)",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 80,
+      "uptime_sec": 130,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143323459-8zrqp",
+    "timestamp": "2026-09-23T06:02:03.459Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login",
+    "target": "Auth",
+    "details": "ورود موفق به سامانه",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 79,
+      "uptime_sec": 130,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790143323238-f137o",
+    "timestamp": "2026-09-23T06:02:03.238Z",
+    "level": "ERROR",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login Attempt",
+    "target": "Auth",
+    "details": "رمز عبور نامعتبر",
+    "ip": "127.0.0.1",
+    "result": "failed",
+    "status": "failed",
+    "system_state": {
+      "memory_mb": 79,
+      "uptime_sec": 130,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790142186171-2z2yz",
+    "timestamp": "2026-09-23T05:43:06.171Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Update Settings",
+    "target": "System Settings",
+    "details": "تنظیمات کلی سامانه ویرایش شد",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 101,
+      "uptime_sec": 3435,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790142170455-85kmu",
+    "timestamp": "2026-09-23T05:42:50.455Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Update Settings",
+    "target": "System Settings",
+    "details": "تنظیمات کلی سامانه ویرایش شد",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 104,
+      "uptime_sec": 3419,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790142117386-xf3m5",
+    "timestamp": "2026-09-23T05:41:57.386Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login",
+    "target": "Auth",
+    "details": "ورود موفق به سامانه",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 101,
+      "uptime_sec": 3366,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
     "id": "log-1788862745472-7ely0",
     "timestamp": "2026-09-08T10:19:05.472Z",
     "level": "INFO",

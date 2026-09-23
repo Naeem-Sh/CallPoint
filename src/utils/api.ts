@@ -233,14 +233,6 @@ export const api = {
   seedDummyData: () => request('/api/admin/seed-dummy-data', { method: 'POST' }),
   createBackup: (comment?: string) => request('/api/backup', { method: 'POST', body: JSON.stringify({ comment }) }),
   getBackupList: () => request('/api/backup/list'),
-  getBackupSchedule: () => request('/api/backup/schedule'),
-  updateBackupSchedule: (data: {
-    auto_backup_enabled?: boolean;
-    auto_backup_frequency?: 'weekly' | 'daily' | 'monthly';
-    auto_backup_day_of_week?: number;
-    auto_backup_time?: string;
-  }) => request('/api/backup/schedule', { method: 'PUT', body: JSON.stringify(data) }),
-  triggerAutoBackupNow: () => request('/api/backup/auto-trigger', { method: 'POST' }),
   downloadBackup: async (filename: string) => {
     const token = getAuthToken();
     const res = await fetch(`/api/backup/download/${encodeURIComponent(filename)}`, {
@@ -288,6 +280,7 @@ export const api = {
 
   // Upload Employee Avatar
   uploadAvatar: (formData: FormData) => request('/api/upload/photo', { method: 'POST', body: formData }),
+  importBatchPhotos: (formData: FormData) => request('/api/employees/batch-photos', { method: 'POST', body: formData }),
 
   // Users
   getUsers: () => request('/api/users'),

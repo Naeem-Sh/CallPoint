@@ -26,6 +26,7 @@ import { Shield, Sparkles, Heart } from 'lucide-react';
 import { toPersianDigits } from './utils/shamsi.ts';
 import { setDefaultAvatar } from './utils/image.ts';
 import { DEFAULT_BG_THEME_ID, getBackgroundTheme } from './utils/backgroundThemes.ts';
+import { updateTabFaviconAndTitle } from './utils/favicon.ts';
 
 export default function App() {
   // Theme State
@@ -109,6 +110,11 @@ export default function App() {
       // ignore
     }
   }, [theme]);
+
+  // Synchronize browser tab favicon and title with organization logo and name
+  useEffect(() => {
+    updateTabFaviconAndTitle(settings?.logo_url, settings?.organization_name);
+  }, [settings?.logo_url, settings?.organization_name]);
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => {

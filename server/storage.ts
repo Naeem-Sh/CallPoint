@@ -26,8 +26,27 @@ import {
   generateInitialEmployees
 } from './seedData.ts';
 
-// Paths definition matching the exact required structure
-export const STORAGE_DIR = path.join(process.cwd(), 'storage');
+// Storage paths definition:
+// Configurable via STORAGE_PATH or DATA_PATH environment variable or external Docker mount (/data, /mnt/data, or /app/storage).
+// This guarantees that deleting or updating the application code or container will NEVER lose user data, photos, or backups.
+function resolveStorageDir(): string {
+  const envPath = (process.env.STORAGE_PATH || process.env.DATA_PATH || '').trim().replace(/^["']|["']$/g, '');
+  if (envPath) {
+    return path.resolve(envPath);
+  }
+  // Auto-detect common container volume mount points
+  if (fs.existsSync('/data')) {
+    return '/data';
+  }
+  if (fs.existsSync('/mnt/data')) {
+    return '/mnt/data';
+  }
+  return path.join(process.cwd(), 'storage');
+}
+
+export const STORAGE_DIR = resolveStorageDir();
+
+export const BUNDLED_TEMPLATE_DIR = path.join(process.cwd(), 'storage');
 export const DATA_DIR = path.join(STORAGE_DIR, 'data');
 export const UPLOADS_DIR = path.join(STORAGE_DIR, 'uploads');
 export const EMP_UPLOADS_DIR = path.join(UPLOADS_DIR, 'employees');
@@ -123,6 +142,59 @@ export async function initializeStorage(): Promise<void> {
   for (const d of dirs) {
     if (!fs.existsSync(d)) {
       fs.mkdirSync(d, { recursive: true });
+    }
+  }
+
+  // If using an external storage directory outside the project folder,
+  // automatically seed initial files, sample images, and company assets if the external directory is clean
+  if (path.resolve(STORAGE_DIR) !== path.resolve(BUNDLED_TEMPLATE_DIR) && fs.existsSync(BUNDLED_TEMPLATE_DIR)) {
+    try {
+      // 1. Copy initial employee avatar photos if external uploads folder is empty
+      const templateEmpDir = path.join(BUNDLED_TEMPLATE_DIR, 'uploads', 'employees');
+      if (fs.existsSync(templateEmpDir)) {
+        const existingPhotos = fs.readdirSync(EMP_UPLOADS_DIR);
+        if (existingPhotos.length === 0) {
+          const templatePhotos = fs.readdirSync(templateEmpDir);
+          for (const photo of templatePhotos) {
+            fs.copyFileSync(path.join(templateEmpDir, photo), path.join(EMP_UPLOADS_DIR, photo));
+          }
+        }
+      }
+
+      // 2. Copy initial company logos if external company uploads folder is empty
+      const templateCompanyDir = path.join(BUNDLED_TEMPLATE_DIR, 'uploads', 'company');
+      if (fs.existsSync(templateCompanyDir)) {
+        const existingCompany = fs.readdirSync(COMPANY_UPLOADS_DIR);
+        if (existingCompany.length === 0) {
+          const templateLogos = fs.readdirSync(templateCompanyDir);
+          for (const logo of templateLogos) {
+            fs.copyFileSync(path.join(templateCompanyDir, logo), path.join(COMPANY_UPLOADS_DIR, logo));
+          }
+        }
+      }
+
+      // 3. Copy initial template JSON files if not present in the external data folder
+      const templateDataDir = path.join(BUNDLED_TEMPLATE_DIR, 'data');
+      if (fs.existsSync(templateDataDir)) {
+        const jsonFiles = [
+          'departments.json',
+          'positions.json',
+          'locations.json',
+          'fields.json',
+          'users.json',
+          'settings.json',
+          'employees.json'
+        ];
+        for (const jf of jsonFiles) {
+          const targetFile = path.join(DATA_DIR, jf);
+          const sourceFile = path.join(templateDataDir, jf);
+          if (!fs.existsSync(targetFile) && fs.existsSync(sourceFile)) {
+            fs.copyFileSync(sourceFile, targetFile);
+          }
+        }
+      }
+    } catch (seedCopyErr) {
+      console.warn('Notice: Could not copy initial template files to external storage:', seedCopyErr);
     }
   }
 
@@ -685,9 +757,9 @@ export async function createBackupZip(
       .filter(e => Boolean(e.avatar))
       .forEach((emp) => {
         try {
-          const safeCode = (emp.personnel_code || emp.id).replace(/[^\w\u0600-\u06FF-]/g, '_');
-          const safeName = (emp.last_name || emp.first_name || 'employee').replace(/[^\w\u0600-\u06FF-]/g, '_');
-          const photoFilename = `${safeCode}_${safeName}.jpg`;
+          // Name photo purely with personnel_code as requested (fallback to id if code is absent)
+          const safeCode = (emp.personnel_code || emp.id).trim().replace(/[^\w\u0600-\u06FF-]/g, '_');
+          const photoFilename = `${safeCode}.jpg`;
 
           if (emp.avatar?.startsWith('data:image/')) {
             const parts = emp.avatar.split(';base64,');
@@ -790,7 +862,7 @@ export async function createBackupZip(
   };
   zip.addFile('backup-metadata.json', Buffer.from(JSON.stringify(meta, null, 2)));
 
-  const fileName = `backup_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
+  const fileName = `Backup_CallPoint_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
   const targetPath = path.join(BACKUPS_DIR, fileName);
   await zip.writeZipPromise(targetPath);
 

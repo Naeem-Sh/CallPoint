@@ -30,7 +30,7 @@ interface AdminOverviewProps {
   currentUser: AppUser | null;
   employees?: Employee[];
   locations?: LocationItem[];
-  onNavigateTab: (tab: string) => void;
+  onNavigateTab: (tab: string, subTab?: 'export' | 'import' | 'backup') => void;
 }
 
 export const AdminOverview: React.FC<AdminOverviewProps> = ({
@@ -80,7 +80,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
               <>
                 <button
                   type="button"
-                  onClick={() => onNavigateTab('excel')}
+                  onClick={() => onNavigateTab('data', 'export')}
                   className="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs backdrop-blur-md transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer"
                 >
                   <FileSpreadsheet className="w-4 h-4" />
@@ -88,11 +88,11 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => onNavigateTab('backup')}
+                  onClick={() => onNavigateTab('data', 'backup')}
                   className="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs backdrop-blur-md transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer"
                 >
                   <HardDriveDownload className="w-4 h-4" />
-                  <span>پشتیبان‌گیری فوری</span>
+                  <span>پشتیبان‌گیری داده‌ها</span>
                 </button>
               </>
             ) : (

@@ -9,6 +9,7 @@ interface ProfileCompletenessCircleProps {
   locations?: LocationItem[];
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
+  showBadge?: boolean;
   className?: string;
 }
 
@@ -17,6 +18,7 @@ export const ProfileCompletenessCircle: React.FC<ProfileCompletenessCircleProps>
   locations = [],
   size = 'md',
   showLabel = false,
+  showBadge = false,
   className = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);

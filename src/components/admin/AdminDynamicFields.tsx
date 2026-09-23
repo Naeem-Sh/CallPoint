@@ -218,7 +218,11 @@ export const AdminDynamicFields: React.FC<AdminDynamicFieldsProps> = ({ fields, 
 
                   <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">
                     <div className="flex items-center gap-1.5">
-                      {field.is_system && <Lock className="w-3 h-3 text-slate-400" title="فیلد سیستمی" />}
+                      {field.is_system && (
+                        <span title="فیلد سیستمی">
+                          <Lock className="w-3 h-3 text-slate-400" />
+                        </span>
+                      )}
                       <span>{field.persian_label}</span>
                     </div>
                   </td>

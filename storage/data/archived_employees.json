@@ -1,0 +1,57 @@
+[
+  {
+    "id": "emp-1790143493654-cbnr",
+    "avatar": "",
+    "first_name": "تست",
+    "last_name": "سیستمی",
+    "full_name": "تست سیستمی",
+    "personnel_code": "8487",
+    "department_id": "dept-1",
+    "position_id": "pos-1",
+    "extension": "9999",
+    "direct_phone": "02188889999",
+    "mobile": "09120009999",
+    "email": "test.emp@org.ir",
+    "location_id": "",
+    "building": "",
+    "unit": "",
+    "floor": "2",
+    "room": "",
+    "notes": "",
+    "phones": [
+      {
+        "id": "p-emp-1790143493654-cbnr-1",
+        "type": "extension",
+        "label": "داخلی سازمانی",
+        "number": "9999",
+        "primary": true
+      },
+      {
+        "id": "p-emp-1790143493654-cbnr-2",
+        "type": "office",
+        "label": "تلفن مستقیم",
+        "number": "02188889999",
+        "primary": false
+      },
+      {
+        "id": "p-emp-1790143493654-cbnr-3",
+        "type": "mobile",
+        "label": "تلفن همراه",
+        "number": "09120009999",
+        "primary": false
+      }
+    ],
+    "custom_fields": {},
+    "search_count": 0,
+    "created_at": "2026-09-23T06:04:53.654Z",
+    "updated_at": "2026-09-23T06:04:53.687Z",
+    "internal_metadata": {
+      "restored_from_archive_at": "2026-09-23T06:04:53.687Z"
+    },
+    "archived_at": "2026-09-23T06:04:53.694Z",
+    "archived_by": "admin",
+    "archive_reason": "انتقال به آرشیو توسط مدیر",
+    "original_department_name": "مدیریت عامل، حوزه ریاست و حراست",
+    "original_position_title": "مدیرعامل"
+  }
+]

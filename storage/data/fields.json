@@ -221,6 +221,25 @@
     "active": true
   },
   {
+    "id": "f-1790143462442",
+    "internal_name": "test_field_1",
+    "persian_label": "فیلد تست",
+    "type": "text",
+    "placeholder": "",
+    "default_value": null,
+    "required": false,
+    "searchable": false,
+    "filterable": false,
+    "visible": true,
+    "importable": true,
+    "exportable": true,
+    "display_order": 20,
+    "active": true,
+    "is_system": false,
+    "options": [],
+    "help_text": ""
+  },
+  {
     "id": "f-sys-id",
     "internal_name": "id",
     "persian_label": "شناسه سیستم",

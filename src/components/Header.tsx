@@ -52,12 +52,17 @@ export const Header: React.FC<HeaderProps> = ({
               )}
               <div>
                 <div className="flex items-center gap-2.5">
-                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                    دفتر تلفن
+                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center flex-wrap gap-x-2">
+                    <span>{settings?.header_title || 'دفتر تلفن'}</span>
+                    {settings?.organization_name ? (
+                      <span className="text-sm sm:text-base font-bold text-indigo-600 dark:text-indigo-400">
+                        | {settings.organization_name}
+                      </span>
+                    ) : null}
                   </h1>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-semibold mt-0.5 max-w-[260px] sm:max-w-lg">
-                  {settings?.organization_name || 'سامانه جامع راهنمای تلفن و اطلاعات کارکنان'}
+                  {settings?.subtitle || (settings?.organization_name ? 'سامانه جامع راهنمای تلفن و اطلاعات کارکنان' : 'سامانه جامع راهنمای تلفن و اطلاعات کارکنان')}
                 </p>
               </div>
             </div>

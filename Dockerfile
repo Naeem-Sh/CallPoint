@@ -8,7 +8,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy dependency manifests
-COPY package.json ./
+COPY package.json package-lock.json* ./
 
 # Install all dependencies for compiling client and server
 RUN npm install
@@ -30,10 +30,10 @@ RUN apk add --no-cache wget ca-certificates
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=4400
 
 # Copy package manifests and install only production dependencies
-COPY package.json ./
+COPY package.json package-lock.json* ./
 RUN npm install --omit=dev && npm cache clean --force
 
 # Copy compiled production bundle from builder
@@ -43,14 +43,14 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/storage ./storage
 
 # Expose HTTP port
-EXPOSE 3000
+EXPOSE 4400
 
-# Declare persistent volume for all database, uploads, and backups
-VOLUME ["/app/storage"]
+# Declare persistent volumes for all database, uploads, and backups (stored outside the container)
+VOLUME ["/app/storage", "/data"]
 
 # Health check to ensure server responds OK
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:4400/api/health || exit 1
 
 # Start the bundled Express + Vite static server
 CMD ["node", "dist/server.cjs"]

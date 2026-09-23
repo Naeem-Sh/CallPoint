@@ -49,16 +49,33 @@ import {
   COMPANY_UPLOADS_DIR,
   BACKUPS_DIR,
   IMPORTS_DIR,
-  STORAGE_DIR
+  STORAGE_DIR,
+  DATA_DIR
 } from './server/storage.ts';
-import {
-  startAutoBackupScheduler,
-  performAutoBackup,
-  getAutoBackupStatus,
-  calculateNextAutoBackup
-} from './server/autoBackupScheduler.ts';
 import { Employee, Department, Position, LocationItem, DynamicFieldDefinition, AppUser } from './src/types.ts';
 import { generateFullExcelBuffer } from './server/excelExport.ts';
+
+declare global {
+  namespace Express {
+    interface Request {
+      file?: any;
+      files?: any;
+    }
+    namespace Multer {
+      interface File {
+        fieldname: string;
+        originalname: string;
+        encoding: string;
+        mimetype: string;
+        size: number;
+        destination: string;
+        filename: string;
+        path: string;
+        buffer?: Buffer;
+      }
+    }
+  }
+}
 
 // Setup file upload storages
 const empStorage = multer.diskStorage({
@@ -120,8 +137,13 @@ const uploadBackupOrExcel = multer({
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB
 });
 
+const uploadBatchPhotos = multer({
+  storage: backupUploadStorage, // Save to IMPORTS_DIR temporarily
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB for batch photos or zip
+});
+
 // Persistent Token Sessions stored across dev server restarts
-const SESSIONS_FILE = path.join(process.cwd(), 'storage', 'data', 'sessions.json');
+const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 
 function loadPersistedSessions(): Map<string, { userId: string; username: string; role: string; expiresAt: number }> {
   const map = new Map<string, { userId: string; username: string; role: string; expiresAt: number }>();
@@ -263,10 +285,11 @@ async function logErrorForTroubleshoot(
 
 async function startServer() {
   await initializeStorage();
-  startAutoBackupScheduler();
 
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.NODE_ENV === 'production'
+    ? (Number(process.env.PORT) || 4400)
+    : 3000;
 
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -281,6 +304,19 @@ async function startServer() {
   app.use('/api/uploads/company', express.static(COMPANY_UPLOADS_DIR, staticUploadOptions));
   app.use('/uploads/employees', express.static(EMP_UPLOADS_DIR, staticUploadOptions));
   app.use('/uploads/company', express.static(COMPANY_UPLOADS_DIR, staticUploadOptions));
+
+  // Direct favicon handler for browser requests
+  app.get('/favicon.ico', async (req, res) => {
+    try {
+      const settings = await getSettings();
+      if (settings?.logo_url) {
+        return res.redirect(settings.logo_url);
+      }
+      return res.sendFile(path.join(process.cwd(), 'public', 'favicon.svg'));
+    } catch {
+      return res.sendFile(path.join(process.cwd(), 'public', 'favicon.svg'));
+    }
+  });
 
   // ===================== AUTH ROUTES =====================
   app.post('/api/auth/login', async (req, res) => {
@@ -501,6 +537,18 @@ async function startServer() {
       const data = req.body;
       const employees = await getEmployees();
       const fields = await getFields();
+
+      if (!data.full_name && (data.first_name || data.last_name)) {
+        data.full_name = `${data.first_name || ''} ${data.last_name || ''}`.trim();
+      }
+
+      if (!data.personnel_code || String(data.personnel_code).trim() === '') {
+        let candidateCode = Math.floor(1000 + Math.random() * 9000);
+        while (employees.some(e => e.personnel_code === String(candidateCode))) {
+          candidateCode = Math.floor(1000 + Math.random() * 9000);
+        }
+        data.personnel_code = String(candidateCode);
+      }
 
       // Check required fields
       for (const f of fields.filter(f => f.active && f.required && !f.is_system)) {
@@ -920,12 +968,14 @@ async function startServer() {
         return res.status(400).json({ error: 'نام واحد سازمانی الزامی است.' });
       }
 
-      if (!code || !code.trim()) {
-        return res.status(400).json({ error: 'کد واحد سازمانی الزامی است.' });
-      }
-
       const depts = await getDepartments();
-      if (depts.some(d => d.code.trim().toLowerCase() === code.trim().toLowerCase())) {
+      let resolvedCode = code ? String(code).trim() : '';
+      if (!resolvedCode) {
+        resolvedCode = `D${(depts.length + 1).toString().padStart(2, '0')}`;
+        while (depts.some(d => d.code.trim().toLowerCase() === resolvedCode.toLowerCase())) {
+          resolvedCode = `D${Math.floor(100 + Math.random() * 900)}`;
+        }
+      } else if (depts.some(d => d.code.trim().toLowerCase() === resolvedCode.toLowerCase())) {
         return res.status(400).json({ error: 'کد واحد سازمانی تکراری است. لطفا یک کد دیگر وارد کنید.' });
       }
 
@@ -940,7 +990,7 @@ async function startServer() {
       const newDept: Department = {
         id,
         name: name.trim(),
-        code: code.trim(),
+        code: resolvedCode,
         phone_prefix: phone_prefix ? phone_prefix.trim() : '',
         manager_id: manager_id || '',
         manager_name: resolvedManagerName,
@@ -1137,13 +1187,12 @@ async function startServer() {
   });
 
   app.post('/api/positions', requireAuth, async (req, res) => {
-    const { title, level } = req.body;
+    const { title } = req.body;
     if (!title) return res.status(400).json({ error: 'عنوان سمت الزامی است.' });
     const list = await getPositions();
     const newItem: Position = {
       id: `pos-${Date.now()}`,
       title: title.trim(),
-      level: level || '',
       active: true
     };
     list.push(newItem);
@@ -1324,14 +1373,17 @@ async function startServer() {
   app.post('/api/fields', requireAdmin, async (req, res) => {
     try {
       const user = (req as any).currentUser;
-      const { internal_name, persian_label, type, placeholder, default_value, required, searchable, filterable, visible, importable, exportable, options, help_text } = req.body;
+      const { placeholder, default_value, required, searchable, filterable, visible, importable, exportable, options, help_text } = req.body;
+      const type = req.body.type || 'text';
+      const rawInternal = req.body.internal_name || req.body.name || req.body.key;
+      const rawPersian = req.body.persian_label || req.body.label || req.body.title || req.body.name;
 
-      if (!internal_name || !persian_label || !type) {
+      if (!rawInternal || !rawPersian || !type) {
         return res.status(400).json({ error: 'نام فنی، عنوان فارسی و نوع فیلد الزامی است.' });
       }
 
       // Safe internal name format (alphanumeric and underscore)
-      const cleanInternalName = internal_name.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const cleanInternalName = String(rawInternal).trim().toLowerCase().replace(/[^a-z0-9_]/g, '_') || `custom_${Date.now()}`;
       const fields = await getFields();
 
       if (fields.some(f => f.internal_name === cleanInternalName)) {
@@ -1341,7 +1393,7 @@ async function startServer() {
       const newField: DynamicFieldDefinition = {
         id: `f-${Date.now()}`,
         internal_name: cleanInternalName,
-        persian_label: persian_label.trim(),
+        persian_label: String(rawPersian).trim(),
         type,
         placeholder: placeholder || '',
         default_value: default_value ?? null,
@@ -2290,6 +2342,8 @@ async function startServer() {
       res.json({
         success: true,
         filename,
+        storage_path: fullPath,
+        backups_directory: BACKUPS_DIR,
         backup: {
           filename,
           size,
@@ -2301,64 +2355,6 @@ async function startServer() {
     } catch (err: any) {
       await logErrorForTroubleshoot(req, 'Create Backup Failed', err, 'BACKUP');
       res.status(500).json({ error: `خطا در ایجاد نسخه پشتیبان: ${err.message}` });
-    }
-  });
-
-  // Automatic backup schedule status and configuration
-  app.get('/api/backup/schedule', requireAdmin, async (req, res) => {
-    try {
-      const status = await getAutoBackupStatus();
-      res.json(status);
-    } catch (err: any) {
-      res.status(500).json({ error: `خطا در دریافت وضعیت زمان‌بندی پشتیبان خودکار: ${err.message}` });
-    }
-  });
-
-  app.put('/api/backup/schedule', requireAdmin, async (req, res) => {
-    try {
-      const user = (req as any).currentUser;
-      const { auto_backup_enabled, auto_backup_frequency, auto_backup_day_of_week, auto_backup_time } = req.body;
-      const current = await getSettings();
-      const updated = {
-        ...current,
-        auto_backup_enabled: auto_backup_enabled !== undefined ? Boolean(auto_backup_enabled) : (current.auto_backup_enabled !== false),
-        auto_backup_frequency: auto_backup_frequency || current.auto_backup_frequency || 'weekly',
-        auto_backup_day_of_week: auto_backup_day_of_week !== undefined ? Number(auto_backup_day_of_week) : (current.auto_backup_day_of_week ?? 5),
-        auto_backup_time: auto_backup_time || current.auto_backup_time || '02:00'
-      };
-      await saveSettings(updated);
-      await logAudit(
-        user.username,
-        'Update Backup Schedule',
-        'Auto Backup Settings',
-        `تنظیمات پشتیبان خودکار به‌روزرسانی شد: وضعیت: ${updated.auto_backup_enabled ? 'فعال' : 'غیرفعال'}، دوره: ${updated.auto_backup_frequency}، ساعت: ${updated.auto_backup_time}`,
-        req.ip
-      );
-      const status = await getAutoBackupStatus();
-      res.json({
-        success: true,
-        message: 'تنظیمات زمان‌بندی پشتیبان خودکار با موفقیت ذخیره شد.',
-        schedule: status
-      });
-    } catch (err: any) {
-      res.status(500).json({ error: `خطا در ذخیره تنظیمات زمان‌بندی پشتیبان خودکار: ${err.message}` });
-    }
-  });
-
-  app.post('/api/backup/auto-trigger', requireAdmin, async (req, res) => {
-    try {
-      const user = (req as any).currentUser;
-      const result = await performAutoBackup(
-        'پشتیبان خودکار هفتگی (اجرای دستی تست توسط مدیر)',
-        `تست فوری توسط کاربر ${user.username}`
-      );
-      if (result.success) {
-        res.json(result);
-      } else {
-        res.status(500).json(result);
-      }
-    } catch (err: any) {
-      res.status(500).json({ error: `خطا در اجرای فوری پشتیبان خودکار: ${err.message}` });
     }
   });
 
@@ -2452,7 +2448,8 @@ async function startServer() {
           location_count,
           photo_count,
           json_count,
-          has_excel_export
+          has_excel_export,
+          storage_path: full
         };
       }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -2461,7 +2458,9 @@ async function startServer() {
         backups: list,
         list,
         count: list.length,
-        total_size: list.reduce((sum, item) => sum + item.size, 0)
+        total_size: list.reduce((sum, item) => sum + item.size, 0),
+        backups_directory: BACKUPS_DIR,
+        storage_directory: STORAGE_DIR
       });
     } catch (err) {
       res.status(500).json({ error: 'خطا در دریافت لیست پشتیبان‌ها' });
@@ -2658,6 +2657,146 @@ async function startServer() {
     }
     const avatarUrl = `/api/uploads/employees/${req.file.filename}`;
     res.json({ url: avatarUrl });
+  });
+
+  // Batch Employee Photos Import (ZIP or multiple images matching personnel_code)
+  app.post('/api/employees/batch-photos', requireAdmin, uploadBatchPhotos.array('photos', 200), async (req, res) => {
+    try {
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: 'هیچ فایلی برای بارگذاری ارسال نشده است.' });
+      }
+
+      if (!fs.existsSync(EMP_UPLOADS_DIR)) {
+        fs.mkdirSync(EMP_UPLOADS_DIR, { recursive: true });
+      }
+
+      const employees = await getEmployees();
+      // Map personnel code to employee index & record
+      const codeMap = new Map<string, number>();
+      employees.forEach((emp, index) => {
+        if (emp.personnel_code) {
+          codeMap.set(String(emp.personnel_code).trim().toLowerCase(), index);
+        }
+        codeMap.set(String(emp.id).trim().toLowerCase(), index);
+      });
+
+      const matched: Array<{
+        filename: string;
+        personnel_code: string;
+        matched: boolean;
+        employee_name?: string;
+        employee_id?: string;
+        size_kb: number;
+      }> = [];
+
+      const unmatched: Array<{
+        filename: string;
+        personnel_code: string;
+        matched: boolean;
+        size_kb: number;
+      }> = [];
+
+      let updatedCount = 0;
+
+      const processImageBuffer = (filename: string, buffer: Buffer) => {
+        const ext = path.extname(filename).toLowerCase();
+        if (!['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
+          return;
+        }
+
+        const baseWithoutExt = path.basename(filename, ext).trim();
+        // Extract personnel code:
+        // Supports "1042", "1042_Ali", "Ali_1042", "1042-photo"
+        let detectedCode = baseWithoutExt;
+        const numMatch = baseWithoutExt.match(/\b(\d+)\b/);
+        if (numMatch && numMatch[1]) {
+          detectedCode = numMatch[1];
+        }
+
+        const targetIndex = codeMap.get(detectedCode.toLowerCase()) ?? codeMap.get(baseWithoutExt.toLowerCase());
+
+        if (targetIndex !== undefined) {
+          const emp = employees[targetIndex];
+          const destName = `emp_${emp.id}_${Date.now()}${ext}`;
+          const destPath = path.join(EMP_UPLOADS_DIR, destName);
+          fs.writeFileSync(destPath, buffer);
+
+          emp.avatar = `/api/uploads/employees/${destName}`;
+          updatedCount++;
+
+          matched.push({
+            filename,
+            personnel_code: emp.personnel_code || detectedCode,
+            matched: true,
+            employee_name: emp.full_name,
+            employee_id: emp.id,
+            size_kb: Math.round(buffer.length / 1024)
+          });
+        } else {
+          unmatched.push({
+            filename,
+            personnel_code: detectedCode,
+            matched: false,
+            size_kb: Math.round(buffer.length / 1024)
+          });
+        }
+      };
+
+      // Process all uploaded files (direct images or ZIP archive)
+      for (const file of files) {
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (ext === '.zip') {
+          try {
+            const zip = new AdmZip(file.path);
+            const entries = zip.getEntries();
+            for (const entry of entries) {
+              if (!entry.isDirectory) {
+                const entryExt = path.extname(entry.name).toLowerCase();
+                if (['.jpg', '.jpeg', '.png', '.webp'].includes(entryExt)) {
+                  processImageBuffer(entry.name, entry.getData());
+                }
+              }
+            }
+          } catch (zipErr) {
+            console.error('Failed to unpack photos ZIP:', zipErr);
+          } finally {
+            try { fs.unlinkSync(file.path); } catch (_) {}
+          }
+        } else {
+          try {
+            const buf = fs.readFileSync(file.path);
+            processImageBuffer(file.originalname, buf);
+          } finally {
+            try { fs.unlinkSync(file.path); } catch (_) {}
+          }
+        }
+      }
+
+      if (updatedCount > 0) {
+        await saveEmployees(employees);
+        const user = (req as any).currentUser;
+        await logAudit(
+          user?.username || 'admin',
+          'Batch Import Photos',
+          'Employees Photos',
+          `${updatedCount} عکس پرسنلی با شماره پرسنلی متصل شدند`,
+          req.ip
+        );
+      }
+
+      res.json({
+        success: true,
+        total: matched.length + unmatched.length,
+        updated_count: updatedCount,
+        matched,
+        unmatched,
+        message: `${updatedCount} عکس با شماره پرسنلی با موفقیت به پروفایل پرسنل متصل شد.`
+      });
+    } catch (err: any) {
+      console.error('Batch photo import error:', err);
+      res.status(500).json({ error: `خطا در اتصال گروهی عکس‌های پرسنلی: ${err.message}` });
+    }
   });
 
   // ===================== USERS MANAGEMENT =====================
