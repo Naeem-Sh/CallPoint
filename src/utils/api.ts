@@ -52,7 +52,7 @@ async function request(url: string, options: RequestInit = {}): Promise<any> {
       headers,
     });
   } catch (networkErr: any) {
-    throw new Error('خطا در برقراری ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی نمایید.');
+    throw new Error('خطا در برقراری ارتباط با سرور. لطفاً اتصال به شبکه داخلی/سرور را بررسی نمایید.');
   }
 
   // Handle blob responses (e.g. export or backup download)
