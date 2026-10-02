@@ -119,9 +119,11 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   type="button"
                   onClick={onOpenLogin}
-                  className="text-xs px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-white shadow-xs"
+                  className="p-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all flex items-center justify-center cursor-pointer active:scale-95"
+                  title="ورود به پنل مدیریت"
+                  aria-label="ورود به پنل مدیریت"
                 >
-                  ورود
+                  <LogIn className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -221,11 +223,11 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={onOpenLogin}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
-                title="ورود"
+                className="p-2.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20 cursor-pointer flex items-center justify-center active:scale-95"
+                title="ورود به پنل مدیریت"
+                aria-label="ورود به پنل مدیریت"
               >
                 <LogIn className="w-4 h-4" />
-                <span>ورود</span>
               </button>
             )}
           </div>

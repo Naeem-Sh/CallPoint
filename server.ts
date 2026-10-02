@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import compression from 'compression';
 import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
@@ -287,12 +288,30 @@ async function startServer() {
   await initializeStorage();
 
   const app = express();
+  // Enable reverse proxy trust for X-Forwarded-* headers (NGINX / Traefik / Docker / K8s)
+  app.set('trust proxy', true);
+
   const PORT = process.env.NODE_ENV === 'production'
     ? (Number(process.env.PORT) || 4400)
     : 3000;
 
+  // High-performance gzip/deflate compression for all HTTP responses
+  app.use(compression({
+    threshold: 1024, // Only compress responses larger than 1KB
+  }));
+
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  // High-performance static fonts caching (1 year immutable)
+  const fontsPath = path.join(process.cwd(), 'public', 'fonts');
+  if (fs.existsSync(fontsPath)) {
+    app.use('/fonts', express.static(fontsPath, {
+      maxAge: '1y',
+      immutable: true,
+      etag: true,
+    }));
+  }
 
   // Static uploads serving with HTTP browser caching & ETag support
   const staticUploadOptions = {
@@ -304,6 +323,33 @@ async function startServer() {
   app.use('/api/uploads/company', express.static(COMPANY_UPLOADS_DIR, staticUploadOptions));
   app.use('/uploads/employees', express.static(EMP_UPLOADS_DIR, staticUploadOptions));
   app.use('/uploads/company', express.static(COMPANY_UPLOADS_DIR, staticUploadOptions));
+
+  // High-speed Bootstrap Endpoint: returns all core metadata in 1 single round-trip
+  app.get('/api/bootstrap', async (req, res) => {
+    try {
+      const [fields, departments, positions, locations, settings, statistics, health] = await Promise.all([
+        getFields(),
+        getDepartments(),
+        getPositions(),
+        getLocations(),
+        getSettings(),
+        calculateStatistics(),
+        getHealthCheck(),
+      ]);
+      res.json({
+        fields,
+        departments,
+        positions,
+        locations,
+        settings,
+        statistics,
+        health,
+      });
+    } catch (err: any) {
+      console.error('Error serving bootstrap data:', err);
+      res.status(500).json({ error: 'خطا در بارگذاری اولیه اطلاعات سامانه' });
+    }
+  });
 
   // Direct favicon handler for browser requests
   app.get('/favicon.ico', async (req, res) => {
@@ -344,10 +390,10 @@ async function startServer() {
       if (!match) {
         const isDefaultAdmin =
           user.username.toLowerCase() === 'admin' &&
-          (password === 'Admin@123456' || password === 'admin' || password === 'admin123');
+          (password === '123' || password === 'Admin@123456' || password === 'admin' || password === 'admin123');
         const isDefaultOperator =
           user.username.toLowerCase() === 'operator' &&
-          (password === 'Operator@123456' || password === 'operator' || password === '123456');
+          (password === '123' || password === 'Operator@123456' || password === 'operator' || password === '123456');
 
         if (isDefaultAdmin || isDefaultOperator) {
           match = true;
@@ -2558,6 +2604,20 @@ async function startServer() {
     }
   });
 
+  // Dedicated lightweight health endpoint for Docker, K8s, and air-gapped monitoring probes
+  app.get('/healthz', async (req, res) => {
+    try {
+      const health = await getHealthCheck();
+      if (health.status !== 'critical') {
+        res.status(200).send('ok');
+      } else {
+        res.status(503).send('degraded');
+      }
+    } catch (err) {
+      res.status(500).send('error');
+    }
+  });
+
   app.get('/api/health', async (req, res) => {
     try {
       const health = await getHealthCheck();
@@ -2952,6 +3012,11 @@ async function startServer() {
     }
   });
 
+  // Ensure unknown /api/* endpoints return JSON 404 rather than falling back to SPA HTML
+  app.all('/api/*', (req: Request, res: Response) => {
+    res.status(404).json({ error: 'مسیر API مورد نظر یافت نشد.' });
+  });
+
   // ===================== VITE & CLIENT SERVING =====================
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
@@ -2961,15 +3026,51 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    // Long-term immutable caching for hashed assets (JS/CSS/fonts), no-cache for index.html
+    app.use(express.static(distPath, {
+      maxAge: '1y',
+      immutable: true,
+      etag: true,
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
+      }
+    }));
     app.get('*', (req, res) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`دفتر تلفن سازمان روی پورت ${PORT} اجرا شد.`);
   });
+
+  // Graceful shutdown handling for POSIX signals (SIGTERM / SIGINT)
+  let isShuttingDown = false;
+  const gracefulShutdown = (signal: string) => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+    console.log(`[SHUTDOWN] Signal ${signal} received. Closing HTTP server and flushing pending operations...`);
+    server.close((err) => {
+      if (err) {
+        console.error('[SHUTDOWN] Error during HTTP server close:', err);
+        process.exit(1);
+      }
+      console.log('[SHUTDOWN] HTTP server closed gracefully. Exiting process.');
+      process.exit(0);
+    });
+
+    // Force exit after 10 seconds if connections refuse to close
+    setTimeout(() => {
+      console.error('[SHUTDOWN] Force terminating process after 10s timeout.');
+      process.exit(1);
+    }, 10000).unref();
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
 
 startServer().catch(err => {

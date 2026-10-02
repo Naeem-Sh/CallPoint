@@ -29,18 +29,23 @@ import {
   Moon,
   Sparkles,
   Printer,
+  Film,
+  Play,
+  Check,
 } from 'lucide-react';
 
 interface AdminSettingsAndUsersProps {
   settings: AppSettings | null;
   onRefreshSettings: () => void;
   onOpenResetModal?: () => void;
+  onPreviewIntro?: () => void;
 }
 
 export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
   settings,
   onRefreshSettings,
   onOpenResetModal,
+  onPreviewIntro,
 }) => {
   const [formData, setFormData] = useState<Partial<AppSettings>>({
     header_title: 'دفتر تلفن',
@@ -49,6 +54,7 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
     timezone: 'Asia/Tehran',
     session_timeout_minutes: 60,
     search_debounce_ms: 300,
+    enable_intro_animation: true,
   });
 
   const [previewLogoUrl, setPreviewLogoUrl] = useState<string | null>(null);
@@ -81,11 +87,32 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
         timezone: settings.timezone || 'Asia/Tehran',
         session_timeout_minutes: settings.session_timeout_minutes || 60,
         search_debounce_ms: settings.search_debounce_ms || 300,
+        enable_intro_animation: settings.enable_intro_animation !== false,
       });
       setPreviewLogoUrl(settings.logo_url || null);
     }
     fetchUsers();
   }, [settings]);
+
+  const handleToggleIntroAnimation = async (enabled: boolean) => {
+    setFormData((prev) => ({ ...prev, enable_intro_animation: enabled }));
+    setLoading(true);
+    setError(null);
+    try {
+      await api.updateSettings({ ...formData, enable_intro_animation: enabled });
+      setSuccess(
+        enabled
+          ? 'انیمیشن آغازین سامانه فعال شد (اجرا در ابتدای نشست کاری).'
+          : 'انیمیشن آغازین سامانه غیرفعال شد (بارگذاری سریع و مستقیم سامانه).'
+      );
+      onRefreshSettings();
+      setTimeout(() => setSuccess(null), 3500);
+    } catch (err: any) {
+      setError(err.message || 'خطا در ذخیره وضعیت انیمیشن');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -674,6 +701,96 @@ export const AdminSettingsAndUsers: React.FC<AdminSettingsAndUsersProps> = ({
                 onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-100"
               />
+            </div>
+
+            {/* Intro Animation Toggle Section */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-50/70 via-purple-50/50 to-indigo-50/70 dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/80 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-xl bg-indigo-600 text-white shadow-xs">
+                    <Film className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <span>انیمیشن آغازین سامانه (Intro Animation)</span>
+                      {formData.enable_intro_animation ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
+                          فعال
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700">
+                          غیرفعال
+                        </span>
+                      )}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                      اجرای انیمیشن نمادین ارتباطات و دفتر تلفن (۱.۵ ثانیه) در هنگام ورود به برنامه
+                    </p>
+                  </div>
+                </div>
+
+                {/* Interactive Toggle Switch */}
+                <button
+                  type="button"
+                  onClick={() => handleToggleIntroAnimation(!formData.enable_intro_animation)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                    formData.enable_intro_animation ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                  }`}
+                  role="switch"
+                  aria-checked={!!formData.enable_intro_animation}
+                  title={formData.enable_intro_animation ? 'غیرفعال‌سازی انیمیشن' : 'فعال‌سازی انیمیشن'}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      formData.enable_intro_animation ? '-translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Action Buttons: Toggle Switch Buttons & Test Preview */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-indigo-100 dark:border-indigo-900/60">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleIntroAnimation(true)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      formData.enable_intro_animation
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'bg-white/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>فعال‌سازی انیمیشن</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleToggleIntroAnimation(false)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      !formData.enable_intro_animation
+                        ? 'bg-slate-700 text-white shadow-xs'
+                        : 'bg-white/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>غیرفعال‌سازی</span>
+                  </button>
+                </div>
+
+                {onPreviewIntro && (
+                  <button
+                    type="button"
+                    onClick={onPreviewIntro}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-white/90 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 border border-indigo-200 dark:border-indigo-800 shadow-xs flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    title="مشاهده نحوه نمایش انیمیشن در سامانه"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current text-indigo-600 dark:text-indigo-400" />
+                    <span>تست و پیش‌نمایش انیمیشن</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

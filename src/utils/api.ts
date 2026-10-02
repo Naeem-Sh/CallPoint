@@ -106,6 +106,9 @@ async function request(url: string, options: RequestInit = {}): Promise<any> {
 }
 
 export const api = {
+  // High-performance bootstrap (Single round-trip for initial app load)
+  getBootstrap: () => request('/api/bootstrap'),
+
   // Auth
   login: (credentials: { username: string; password: string }) =>
     request('/api/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),

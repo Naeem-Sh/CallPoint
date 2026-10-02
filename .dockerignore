@@ -23,3 +23,6 @@ pnpm-debug.log*
 Thumbs.db
 .idea
 .vscode
+*.tmp
+*.temp
+storage/data/*.tmp

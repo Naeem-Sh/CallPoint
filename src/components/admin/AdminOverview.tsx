@@ -8,16 +8,12 @@ import {
   Building2,
   PhoneCall,
   Image,
-  Database,
-  Search,
   FolderArchive,
-  ShieldCheck,
   CheckCircle2,
   FileSpreadsheet,
   UserPlus,
   HardDriveDownload,
   Sparkles,
-  Layers,
   PieChart,
   Clock,
   AlertTriangle,
@@ -26,7 +22,7 @@ import {
 
 interface AdminOverviewProps {
   stats: SystemStatistics | null;
-  health: SystemHealth | null;
+  health?: SystemHealth | null;
   currentUser: AppUser | null;
   employees?: Employee[];
   locations?: LocationItem[];
@@ -35,14 +31,11 @@ interface AdminOverviewProps {
 
 export const AdminOverview: React.FC<AdminOverviewProps> = ({
   stats,
-  health,
   currentUser,
   employees = [],
   locations = [],
   onNavigateTab,
 }) => {
-  const isHealthy = health?.status === 'ok' || health?.status === 'healthy';
-
   const completenessStats = React.useMemo(() => {
     return calculateEmployeesCompletenessStats(employees, locations);
   }, [employees, locations]);
@@ -285,83 +278,6 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
           </div>
         </div>
       )}
-
-      {/* Streamlined System Diagnostics Panel */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
-                وضعیت سلامت و پایایی سامانه
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                پایش یکپارچه پایگاه داده، موتور جستجو و سرویس‌های فایل
-              </p>
-            </div>
-          </div>
-          <span className="self-start sm:self-auto text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {isHealthy ? 'کلیه زیرسیستم‌ها عملیاتی و پایدار' : 'بررسی زیرسیستم‌ها'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Database className="w-4 h-4 text-indigo-500" />
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">پایگاه داده JSON</span>
-              </div>
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              ذخیره‌سازی اتمیک و امن فایل‌های ساختاریافته بدون نیاز به سرور سنگین خارجی
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Search className="w-4 h-4 text-emerald-500" />
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">موتور جستجو</span>
-              </div>
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              ایندکس بهینه‌سازی‌شده برای جستجوی فوری نام، شماره‌ها، سمت و سازمان
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <FolderArchive className="w-4 h-4 text-amber-500" />
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">مخزن فایل‌ها و تصاویر</span>
-              </div>
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              دایرکتوری‌های آپلود امن و نگهداری آواتارها و اسناد پیوست
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-purple-500" />
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">سامانه پشتیبان‌گیری</span>
-              </div>
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              بسته‌های ZIP خودکار شامل دیتابیس، تصاویر کارکنان و خروجی اکسل جامع
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

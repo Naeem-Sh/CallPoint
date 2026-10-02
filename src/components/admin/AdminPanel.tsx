@@ -50,6 +50,7 @@ interface AdminPanelProps {
   onRefreshAll: () => void;
   onCloseAdmin: () => void;
   onLogout?: () => void;
+  onPreviewIntro?: () => void;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -65,6 +66,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onRefreshAll,
   onCloseAdmin,
   onLogout,
+  onPreviewIntro,
 }) => {
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [dataSubTab, setDataSubTab] = useState<'export' | 'import' | 'backup'>('export');
@@ -76,7 +78,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const isAdmin = currentUser?.role === 'admin';
 
   const allTabs = [
-    { id: 'overview', label: 'پیشخوان و سلامت', icon: LayoutDashboard, adminOnly: false },
+    { id: 'overview', label: 'پیشخوان', icon: LayoutDashboard, adminOnly: false },
     { id: 'employees', label: 'مدیریت کارکنان', icon: Users, adminOnly: false },
     { id: 'departments', label: 'واحدهای سازمانی', icon: Building, adminOnly: false },
     { id: 'locations', label: 'محل‌های استقرار', icon: MapPin, adminOnly: false },
@@ -289,6 +291,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             settings={settings}
             onRefreshSettings={onRefreshAll}
             onOpenResetModal={() => setIsResetModalOpen(true)}
+            onPreviewIntro={onPreviewIntro}
           />
         )}
       </div>

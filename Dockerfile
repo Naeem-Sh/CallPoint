@@ -24,13 +24,11 @@ RUN npm run build
 # =========================================================
 FROM node:20-alpine AS runner
 
-# Install wget and ca-certificates for health checks
-RUN apk add --no-cache wget ca-certificates
-
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=4400
+ENV TZ=Asia/Tehran
 
 # Copy package manifests and install only production dependencies
 COPY package.json package-lock.json* ./
@@ -48,9 +46,9 @@ EXPOSE 4400
 # Declare persistent volumes for all database, uploads, and backups (stored outside the container)
 VOLUME ["/app/storage", "/data"]
 
-# Health check to ensure server responds OK
+# Lightweight, self-contained, offline-resilient health check using native Node.js
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:4400/api/health || exit 1
+  CMD node -e "require('http').get('http://127.0.0.1:' + (process.env.PORT || 4400) + '/healthz', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
 # Start the bundled Express + Vite static server
 CMD ["node", "dist/server.cjs"]

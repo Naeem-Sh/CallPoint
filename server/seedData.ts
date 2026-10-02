@@ -79,6 +79,7 @@ export const INITIAL_SETTINGS: AppSettings = {
   theme: 'system',
   contact_info: 'پشتیبانی فنی: داخلی ۲۰۱ | helpdesk@org.ir',
   intranet_banner: 'محرمانه - شبکه داخلی سازمان',
+  enable_intro_animation: true,
 };
 
 export const INITIAL_USERS: AppUser[] = [

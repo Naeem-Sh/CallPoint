@@ -18,15 +18,18 @@ import { SearchAndFilters } from './components/SearchAndFilters.tsx';
 import { EmployeeDirectory } from './components/EmployeeDirectory.tsx';
 import { RecentlyUpdatedBox } from './components/RecentlyUpdatedBox.tsx';
 import { MostSearchedBox } from './components/MostSearchedBox.tsx';
-import { EmployeeProfileModal } from './components/EmployeeProfileModal.tsx';
-import { LoginModal } from './components/LoginModal.tsx';
-import { AdminPanel } from './components/admin/AdminPanel.tsx';
-import { PrintDirectoryModal } from './components/PrintDirectoryModal.tsx';
 import { Shield, Sparkles, Heart } from 'lucide-react';
 import { toPersianDigits } from './utils/shamsi.ts';
 import { setDefaultAvatar } from './utils/image.ts';
 import { DEFAULT_BG_THEME_ID, getBackgroundTheme } from './utils/backgroundThemes.ts';
 import { updateTabFaviconAndTitle } from './utils/favicon.ts';
+import { IntroAnimation } from './components/IntroAnimation.tsx';
+
+// High-speed Code Splitting: Lazy-load heavy modals and admin panel to keep initial bundle tiny (~350KB)
+const AdminPanel = React.lazy(() => import('./components/admin/AdminPanel.tsx').then(m => ({ default: m.AdminPanel })));
+const PrintDirectoryModal = React.lazy(() => import('./components/PrintDirectoryModal.tsx').then(m => ({ default: m.PrintDirectoryModal })));
+const EmployeeProfileModal = React.lazy(() => import('./components/EmployeeProfileModal.tsx').then(m => ({ default: m.EmployeeProfileModal })));
+const LoginModal = React.lazy(() => import('./components/LoginModal.tsx').then(m => ({ default: m.LoginModal })));
 
 export default function App() {
   // Theme State
@@ -61,6 +64,30 @@ export default function App() {
   const [isAdminView, setIsAdminView] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
+
+  // 1.5-Second Session-Scoped Welcome Animation (runs only once per user browser session if enabled)
+  const [showIntroAnimation, setShowIntroAnimation] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('org_intro_animation_light_v1') !== 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [isPreviewingIntro, setIsPreviewingIntro] = useState<boolean>(false);
+
+  const handleIntroComplete = useCallback(() => {
+    try {
+      sessionStorage.setItem('org_intro_animation_light_v1', 'true');
+    } catch {
+      // ignore
+    }
+    setShowIntroAnimation(false);
+    setIsPreviewingIntro(false);
+  }, []);
+
+  const handlePreviewIntro = useCallback(() => {
+    setIsPreviewingIntro(true);
+  }, []);
 
   // Core Data
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -143,28 +170,43 @@ export default function App() {
       });
   }, []);
 
-  // Fetch core metadata (fields, departments, positions, locations, settings)
+  // Fetch core metadata (fields, departments, positions, locations, settings) via unified bootstrap
   const fetchMetadata = useCallback(async () => {
     try {
-      const [fData, dData, pData, lData, sData, statsData, healthData] = await Promise.all([
-        api.getFields(),
-        api.getDepartments(),
-        api.getPositions(),
-        api.getLocations(),
-        api.getSettings(),
-        api.getStatistics(),
-        api.getHealth(),
-      ]);
+      let bData: any;
+      try {
+        bData = await api.getBootstrap();
+      } catch {
+        // Fallback to concurrent individual requests if bootstrap endpoint is unavailable
+        const [fData, dData, pData, lData, sData, statsData, healthData] = await Promise.all([
+          api.getFields(),
+          api.getDepartments(),
+          api.getPositions(),
+          api.getLocations(),
+          api.getSettings(),
+          api.getStatistics(),
+          api.getHealth(),
+        ]);
+        bData = {
+          fields: fData,
+          departments: dData,
+          positions: pData,
+          locations: lData,
+          settings: sData,
+          statistics: statsData,
+          health: healthData,
+        };
+      }
 
-      setFields(Array.isArray(fData) ? fData : (fData?.fields || []));
-      setDepartments(Array.isArray(dData) ? dData : (dData?.departments || []));
-      setPositions(Array.isArray(pData) ? pData : (pData?.positions || []));
-      setLocations(Array.isArray(lData) ? lData : (lData?.locations || []));
-      const loadedSettings = sData?.settings || sData || null;
+      setFields(Array.isArray(bData.fields) ? bData.fields : (bData.fields?.fields || []));
+      setDepartments(Array.isArray(bData.departments) ? bData.departments : (bData.departments?.departments || []));
+      setPositions(Array.isArray(bData.positions) ? bData.positions : (bData.positions?.positions || []));
+      setLocations(Array.isArray(bData.locations) ? bData.locations : (bData.locations?.locations || []));
+      const loadedSettings = bData.settings?.settings || bData.settings || null;
       setSettings(loadedSettings);
       setDefaultAvatar(loadedSettings?.default_avatar);
-      setStats(statsData?.statistics || statsData || null);
-      setHealth(healthData || null);
+      setStats(bData.statistics?.statistics || bData.statistics || null);
+      setHealth(bData.health || null);
     } catch (err) {
       console.error('Failed to fetch metadata:', err);
     }
@@ -297,6 +339,15 @@ export default function App() {
       className="min-h-screen text-slate-800 dark:text-slate-100 font-sans transition-colors selection:bg-indigo-500 selection:text-white"
       style={currentBgStyle}
     >
+      {/* 1.5-Second Telephone Directory Intro Animation (Executes once per session if enabled, or when tested by admin) */}
+      {((showIntroAnimation && settings?.enable_intro_animation !== false) || isPreviewingIntro) && (
+        <IntroAnimation
+          onComplete={handleIntroComplete}
+          organizationName={settings?.organization_name}
+          logoUrl={settings?.logo_url}
+        />
+      )}
+
       {/* Background App Shell (hidden when printing directory) */}
       <div id="app-main-shell" className={isPrintModalOpen ? 'print:hidden' : ''}>
         {/* Header */}
@@ -317,20 +368,30 @@ export default function App() {
         {/* Main Content Area */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {isAdminView && currentUser ? (
-            <AdminPanel
-              employees={employees}
-              fields={fields}
-              departments={departments}
-              positions={positions}
-              locations={locations}
-              stats={stats}
-              health={health}
-              settings={settings}
-              currentUser={currentUser}
-              onRefreshAll={refreshAll}
-              onCloseAdmin={() => setIsAdminView(false)}
-              onLogout={handleLogout}
-            />
+            <React.Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center p-16 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 shadow-xl space-y-4">
+                  <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-slate-600 dark:text-slate-300 font-medium">در حال بارگذاری پنل مدیریت...</p>
+                </div>
+              }
+            >
+              <AdminPanel
+                employees={employees}
+                fields={fields}
+                departments={departments}
+                positions={positions}
+                locations={locations}
+                stats={stats}
+                health={health}
+                settings={settings}
+                currentUser={currentUser}
+                onRefreshAll={refreshAll}
+                onCloseAdmin={() => setIsAdminView(false)}
+                onLogout={handleLogout}
+                onPreviewIntro={handlePreviewIntro}
+              />
+            </React.Suspense>
           ) : (
             <div className="space-y-6">
               {/* Top Statistics Box */}
@@ -431,41 +492,47 @@ export default function App() {
 
       {/* Print Directory Modal */}
       {isPrintModalOpen && (
-        <PrintDirectoryModal
-          employees={employees}
-          departments={departments}
-          locations={locations}
-          positions={positions}
-          settings={settings}
-          onClose={() => setIsPrintModalOpen(false)}
-        />
+        <React.Suspense fallback={null}>
+          <PrintDirectoryModal
+            employees={employees}
+            departments={departments}
+            locations={locations}
+            positions={positions}
+            settings={settings}
+            onClose={() => setIsPrintModalOpen(false)}
+          />
+        </React.Suspense>
       )}
 
       {/* Employee Profile Modal */}
       {selectedEmployee && (
-        <EmployeeProfileModal
-          employee={selectedEmployee}
-          fields={fields}
-          departments={departments}
-          positions={positions}
-          locations={locations}
-          onClose={() => setSelectedEmployee(null)}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-        />
+        <React.Suspense fallback={null}>
+          <EmployeeProfileModal
+            employee={selectedEmployee}
+            fields={fields}
+            departments={departments}
+            positions={positions}
+            locations={locations}
+            onClose={() => setSelectedEmployee(null)}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+          />
+        </React.Suspense>
       )}
 
       {/* Admin Login Modal */}
       {isLoginModalOpen && (
-        <LoginModal
-          isOpen={isLoginModalOpen}
-          onClose={() => setIsLoginModalOpen(false)}
-          onLoginSuccess={(user) => {
-            setCurrentUser(user);
-            setIsAdminView(true);
-            refreshAll();
-          }}
-        />
+        <React.Suspense fallback={null}>
+          <LoginModal
+            isOpen={isLoginModalOpen}
+            onClose={() => setIsLoginModalOpen(false)}
+            onLoginSuccess={(user) => {
+              setCurrentUser(user);
+              setIsAdminView(true);
+              refreshAll();
+            }}
+          />
+        </React.Suspense>
       )}
     </div>
   );

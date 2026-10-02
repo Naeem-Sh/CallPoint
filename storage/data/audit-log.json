@@ -1,5 +1,77 @@
 [
   {
+    "id": "log-1790710292653-4rhim",
+    "timestamp": "2026-09-29T19:31:32.653Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login",
+    "target": "Auth",
+    "details": "ورود موفق به سامانه",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 133,
+      "uptime_sec": 3,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790710257927-027z2",
+    "timestamp": "2026-09-29T19:30:57.927Z",
+    "level": "INFO",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login",
+    "target": "Auth",
+    "details": "ورود موفق به سامانه",
+    "ip": "127.0.0.1",
+    "result": "success",
+    "status": "success",
+    "system_state": {
+      "memory_mb": 73,
+      "uptime_sec": 178,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790710129705-vc9fg",
+    "timestamp": "2026-09-29T19:28:49.705Z",
+    "level": "ERROR",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login Attempt",
+    "target": "Auth",
+    "details": "رمز عبور نامعتبر",
+    "ip": "127.0.0.1",
+    "result": "failed",
+    "status": "failed",
+    "system_state": {
+      "memory_mb": 73,
+      "uptime_sec": 49,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
+    "id": "log-1790710111027-b7q3w",
+    "timestamp": "2026-09-29T19:28:31.027Z",
+    "level": "ERROR",
+    "category": "SYSTEM",
+    "username": "admin",
+    "action": "Login Attempt",
+    "target": "Auth",
+    "details": "رمز عبور نامعتبر",
+    "ip": "127.0.0.1",
+    "result": "failed",
+    "status": "failed",
+    "system_state": {
+      "memory_mb": 73,
+      "uptime_sec": 31,
+      "node_version": "v22.23.2"
+    }
+  },
+  {
     "id": "log-1790143494869-wursj",
     "timestamp": "2026-09-23T06:04:54.869Z",
     "level": "INFO",

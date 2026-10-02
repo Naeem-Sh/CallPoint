@@ -94,14 +94,7 @@ function applyFaviconToDocument(href: string): void {
   iconLink.href = href;
   document.head.appendChild(iconLink);
 
-  // 2. Shortcut icon for legacy browsers
-  const shortcutLink = document.createElement('link');
-  shortcutLink.rel = 'shortcut icon';
-  shortcutLink.type = type;
-  shortcutLink.href = href;
-  document.head.appendChild(shortcutLink);
-
-  // 3. Apple Touch Icon for iOS/macOS Safari and bookmarks
+  // 2. Apple Touch Icon for iOS/macOS Safari and bookmarks
   const appleLink = document.createElement('link');
   appleLink.rel = 'apple-touch-icon';
   appleLink.href = href;

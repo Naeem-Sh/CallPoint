@@ -11,13 +11,19 @@ services:
       - NODE_ENV=production
       - PORT=4400
       - STORAGE_PATH=/app/storage
+      - TZ=Asia/Tehran
     volumes:
-      # ذخیره دائم داده‌ها در مسیری کاملاً خارج از پوشه پروژه تا با حذف یا آپدیت کدها هیچ داده‌ای از دست نرود
-      # Stores data in a directory outside the project folder (e.g. ../org-phonebook-data)
-      # You can also customize this path by setting STORAGE_PATH in your .env file
+      # Persistent storage mapped outside container for full data safety across rebuilds
       - ${STORAGE_PATH:-../org-phonebook-data}:/app/storage
+      # Enforce host system time synchronization for audit logs and Persian calendar
+      - /etc/localtime:/etc/localtime:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:4400/api/health || exit 1"]
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:4400/healthz', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3

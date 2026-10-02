@@ -142,6 +142,7 @@ export interface AppSettings {
   intranet_banner?: string;
   session_timeout_minutes?: number;
   search_debounce_ms?: number;
+  enable_intro_animation?: boolean; // فعال یا غیرفعال‌سازی انیمیشن ابتدای برنامه
 }
 
 export interface SystemStatistics {
@@ -232,4 +233,4 @@ export interface HealthCheckResult {
   checked_at?: string;
 }
 
-export const APP_VERSION = '2.3.0';
+export const APP_VERSION = '2.3.1';
