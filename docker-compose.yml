@@ -10,11 +10,15 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=4400
-      - STORAGE_PATH=/app/storage
+      - DATA_DIR=/app/data
       - TZ=Asia/Tehran
+      - RESET_ADMIN_PASSWORD=false
+      - JWT_SECRET=fallback-production-jwt-secret-replace-me
+      - INITIAL_ADMIN_USERNAME=admin
+      - INITIAL_ADMIN_PASSWORD=123
     volumes:
-      # Persistent storage mapped outside container for full data safety across rebuilds
-      - ${STORAGE_PATH:-../org-phonebook-data}:/app/storage
+      # Standardized persistent storage directory mapped outside container
+      - ./data:/app/data
       # Enforce host system time synchronization for audit logs and Persian calendar
       - /etc/localtime:/etc/localtime:ro
     logging:

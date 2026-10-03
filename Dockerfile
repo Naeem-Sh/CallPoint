@@ -28,7 +28,12 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=4400
+ENV DATA_DIR=/app/data
 ENV TZ=Asia/Tehran
+ENV RESET_ADMIN_PASSWORD=false
+ENV JWT_SECRET=fallback-production-jwt-secret-replace-me
+ENV INITIAL_ADMIN_USERNAME=admin
+ENV INITIAL_ADMIN_PASSWORD=123
 
 # Copy package manifests and install only production dependencies
 COPY package.json package-lock.json* ./
@@ -43,8 +48,8 @@ COPY --from=builder /app/storage ./storage
 # Expose HTTP port
 EXPOSE 4400
 
-# Declare persistent volumes for all database, uploads, and backups (stored outside the container)
-VOLUME ["/app/storage", "/data"]
+# Declare persistent volume for standardized container data root
+VOLUME ["/app/data"]
 
 # Lightweight, self-contained, offline-resilient health check using native Node.js
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

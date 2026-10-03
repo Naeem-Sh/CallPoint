@@ -5,6 +5,8 @@ coverage
 .git
 .gitignore
 .github
+data
+portal_shiraz_data
 storage/backups/*
 !storage/backups/.gitkeep
 storage/imports/*

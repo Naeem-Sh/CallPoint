@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import bcrypt from 'bcryptjs';
 import AdmZip from 'adm-zip';
 import { generateFullExcelBuffer } from './excelExport.ts';
 import {
@@ -27,35 +28,38 @@ import {
 } from './seedData.ts';
 
 // Storage paths definition:
-// Configurable via STORAGE_PATH or DATA_PATH environment variable or external Docker mount (/data, /mnt/data, or /app/storage).
-// This guarantees that deleting or updating the application code or container will NEVER lose user data, photos, or backups.
-function resolveStorageDir(): string {
-  const envPath = (process.env.STORAGE_PATH || process.env.DATA_PATH || '').trim().replace(/^["']|["']$/g, '');
-  if (envPath) {
-    return path.resolve(envPath);
+// Standardized under DATA_DIR (default: /app/data in container, ./data in local dev).
+// Configurable via DATA_DIR environment variable (with backward-compatible STORAGE_PATH fallback).
+export function resolveDataDir(): string {
+  const envData = (process.env.DATA_DIR || process.env.STORAGE_PATH || process.env.DATA_PATH || '').trim().replace(/^["']|["']$/g, '');
+  if (envData) {
+    return path.resolve(envData);
   }
-  // Auto-detect common container volume mount points
-  if (fs.existsSync('/data')) {
-    return '/data';
+  // Standard container volume mount point
+  const containerRoot = '/app/data';
+  try {
+    if (!fs.existsSync(containerRoot)) {
+      fs.mkdirSync(containerRoot, { recursive: true });
+    }
+    return containerRoot;
+  } catch {
+    // Local dev fallback if /app is not writable
+    return path.resolve(process.cwd(), 'data');
   }
-  if (fs.existsSync('/mnt/data')) {
-    return '/mnt/data';
-  }
-  return path.join(process.cwd(), 'storage');
 }
 
-export const STORAGE_DIR = resolveStorageDir();
+export const DATA_DIR = resolveDataDir();
+export const STORAGE_DIR = DATA_DIR; // alias for backward-compatibility
 
 export const BUNDLED_TEMPLATE_DIR = path.join(process.cwd(), 'storage');
-export const DATA_DIR = path.join(STORAGE_DIR, 'data');
-export const UPLOADS_DIR = path.join(STORAGE_DIR, 'uploads');
+export const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 export const EMP_UPLOADS_DIR = path.join(UPLOADS_DIR, 'employees');
 export const COMPANY_UPLOADS_DIR = path.join(UPLOADS_DIR, 'company');
-export const BACKUPS_DIR = path.join(STORAGE_DIR, 'backups');
-export const IMPORTS_DIR = path.join(STORAGE_DIR, 'imports');
-export const EXPORTS_DIR = path.join(STORAGE_DIR, 'exports');
+export const BACKUPS_DIR = path.join(DATA_DIR, 'backups');
+export const IMPORTS_DIR = path.join(DATA_DIR, 'imports');
+export const EXPORTS_DIR = path.join(DATA_DIR, 'exports');
 
-// File paths
+// Standardized primary JSON data files directly under DATA_DIR
 const EMPLOYEES_FILE = path.join(DATA_DIR, 'employees.json');
 const ARCHIVED_EMPLOYEES_FILE = path.join(DATA_DIR, 'archived_employees.json');
 const DEPARTMENTS_FILE = path.join(DATA_DIR, 'departments.json');
@@ -66,6 +70,16 @@ const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const SEARCH_STATS_FILE = path.join(DATA_DIR, 'search-stats.json');
 const AUDIT_LOG_FILE = path.join(DATA_DIR, 'audit-log.json');
+
+// Standardized consolidated database & visit snapshots under DATA_DIR
+const DATABASE_SNAPSHOT_FILE = path.join(DATA_DIR, 'database.json');
+const VISITS_FILE = path.join(DATA_DIR, 'visits.json');
+
+// Mandatory Environment Defaults & In-Code Fallbacks (Zero-Stop Runtime)
+export const INITIAL_ADMIN_USERNAME = (process.env.INITIAL_ADMIN_USERNAME || 'admin').trim();
+export const INITIAL_ADMIN_PASSWORD = (process.env.INITIAL_ADMIN_PASSWORD || '123').trim();
+export const RESET_ADMIN_PASSWORD = (process.env.RESET_ADMIN_PASSWORD || 'false').toLowerCase() === 'true';
+export const JWT_SECRET = process.env.JWT_SECRET || 'fallback-production-jwt-secret-replace-me';
 
 // Mutex queues for atomic serialized file writes
 const fileQueues: Map<string, Promise<any>> = new Map();
@@ -212,7 +226,39 @@ export async function initializeStorage(): Promise<void> {
     await atomicWriteJson(FIELDS_FILE, INITIAL_FIELDS);
   }
   if (!fs.existsSync(USERS_FILE)) {
-    await atomicWriteJson(USERS_FILE, INITIAL_USERS);
+    const bootstrapUsers = INITIAL_USERS.map(u => {
+      if (u.role === 'admin') {
+        return {
+          ...u,
+          username: INITIAL_ADMIN_USERNAME,
+          password_hash: bcrypt.hashSync(INITIAL_ADMIN_PASSWORD, 10),
+        };
+      }
+      return u;
+    });
+    await atomicWriteJson(USERS_FILE, bootstrapUsers);
+  } else if (RESET_ADMIN_PASSWORD) {
+    // If explicitly requested via RESET_ADMIN_PASSWORD=true, reset the admin user's password
+    try {
+      const existingUsers = await getUsers();
+      let updated = false;
+      const modifiedUsers = existingUsers.map(u => {
+        if (u.role === 'admin' || u.username === INITIAL_ADMIN_USERNAME) {
+          updated = true;
+          return {
+            ...u,
+            password_hash: bcrypt.hashSync(INITIAL_ADMIN_PASSWORD, 10)
+          };
+        }
+        return u;
+      });
+      if (updated) {
+        await saveUsers(modifiedUsers);
+        console.log(`[Security] RESET_ADMIN_PASSWORD=true: Administrator password reset to default credentials.`);
+      }
+    } catch (e) {
+      console.warn('Failed to reset admin password:', e);
+    }
   }
   if (!fs.existsSync(SETTINGS_FILE)) {
     await atomicWriteJson(SETTINGS_FILE, INITIAL_SETTINGS);
@@ -241,6 +287,45 @@ export async function initializeStorage(): Promise<void> {
       }
     ];
     await atomicWriteJson(AUDIT_LOG_FILE, initLog);
+  }
+
+  // Ensure consolidated database snapshot and visits file exist under DATA_DIR
+  if (!fs.existsSync(DATABASE_SNAPSHOT_FILE)) {
+    await syncConsolidatedDatabase();
+  }
+  if (!fs.existsSync(VISITS_FILE)) {
+    const stats = await getSearchStats();
+    await atomicWriteJson(VISITS_FILE, stats);
+  }
+}
+
+// Synchronize consolidated database snapshot for standardized /app/data/database.json layout
+export async function syncConsolidatedDatabase(): Promise<void> {
+  try {
+    const [employees, departments, positions, locations, fields, users, settings] = await Promise.all([
+      getEmployees(),
+      getDepartments(),
+      getPositions(),
+      getLocations(),
+      getFields(),
+      getUsers(),
+      getSettings()
+    ]);
+    const snapshot = {
+      version: '1.0',
+      synced_at: new Date().toISOString(),
+      employees_count: employees.length,
+      employees,
+      departments,
+      positions,
+      locations,
+      fields,
+      users: users.map(u => ({ id: u.id, username: u.username, role: u.role, name: u.name, active: u.active })),
+      settings
+    };
+    await atomicWriteJson(DATABASE_SNAPSHOT_FILE, snapshot);
+  } catch (err) {
+    // Non-fatal background sync
   }
 }
 
@@ -477,6 +562,9 @@ export async function logSearch(query: string, resultsCount: number, ip: string 
     stats.length = 1000;
   }
   await atomicWriteJson(SEARCH_STATS_FILE, stats);
+  try {
+    await atomicWriteJson(VISITS_FILE, stats);
+  } catch {}
 }
 
 export const MAX_AUDIT_LOGS = 200;
@@ -709,7 +797,7 @@ export async function createBackupZip(
   const zip = new AdmZip();
   
   // Add all JSON files from data
-  const dataFiles = fs.readdirSync(DATA_DIR);
+  const dataFiles = fs.readdirSync(DATA_DIR).filter(f => f.endsWith('.json'));
   for (const f of dataFiles) {
     const fullPath = path.join(DATA_DIR, f);
     if (fs.statSync(fullPath).isFile()) {
@@ -1066,7 +1154,7 @@ export async function getHealthCheck(): Promise<HealthCheckResult> {
   let jsonStorageMsg = 'تمامی فایل‌های اصلی در وضعیت سالم و یکپارچه هستند';
   let jsonFilesCount = 0;
   try {
-    const files = fs.readdirSync(DATA_DIR);
+    const files = fs.readdirSync(DATA_DIR).filter(f => f.endsWith('.json'));
     jsonFilesCount = files.length;
     for (const f of files) {
       const content = fs.readFileSync(path.join(DATA_DIR, f), 'utf-8');

@@ -233,4 +233,4 @@ export interface HealthCheckResult {
   checked_at?: string;
 }
 
-export const APP_VERSION = '2.3.1';
+export const APP_VERSION = '2.3.2';

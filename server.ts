@@ -51,7 +51,11 @@ import {
   BACKUPS_DIR,
   IMPORTS_DIR,
   STORAGE_DIR,
-  DATA_DIR
+  DATA_DIR,
+  INITIAL_ADMIN_USERNAME,
+  INITIAL_ADMIN_PASSWORD,
+  RESET_ADMIN_PASSWORD,
+  JWT_SECRET
 } from './server/storage.ts';
 import { Employee, Department, Position, LocationItem, DynamicFieldDefinition, AppUser } from './src/types.ts';
 import { generateFullExcelBuffer } from './server/excelExport.ts';
@@ -389,8 +393,8 @@ async function startServer() {
       // Safe self-healing fallback for admin/operator accounts
       if (!match) {
         const isDefaultAdmin =
-          user.username.toLowerCase() === 'admin' &&
-          (password === '123' || password === 'Admin@123456' || password === 'admin' || password === 'admin123');
+          (user.username.toLowerCase() === INITIAL_ADMIN_USERNAME.toLowerCase() || user.username.toLowerCase() === 'admin') &&
+          (password === INITIAL_ADMIN_PASSWORD || password === '123' || password === 'Admin@123456' || password === 'admin' || password === 'admin123');
         const isDefaultOperator =
           user.username.toLowerCase() === 'operator' &&
           (password === '123' || password === 'Operator@123456' || password === 'operator' || password === '123456');

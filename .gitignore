@@ -22,6 +22,12 @@ lerna-debug.log*
 .env.*
 !.env.example
 
+# Persistent Storage & Runtime Data Directories
+data/
+/data/
+portal_shiraz_data/
+/app/data/
+
 # OS & Editor
 .DS_Store
 Thumbs.db

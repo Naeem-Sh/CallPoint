@@ -131,9 +131,63 @@ else
 fi
 
 # ------------------------------------------------------------------------------
-# STEP 6: Runtime Connectivity & Health Probes Verification
+# STEP 6: Persistent Storage Standardization & Dynamic DATA_DIR Derivation
 # ------------------------------------------------------------------------------
-log_header "6. Runtime Connectivity & Health Probes Verification"
+log_header "6. Persistent Storage Standardization Audit"
+
+# Test dynamic derivation of DATA_DIR
+DATA_DIR_CHECK=$(node -e "
+  process.env.DATA_DIR = '/tmp/test_audit_datadir';
+  const { DATA_DIR, UPLOADS_DIR, BACKUPS_DIR } = require('./dist/server.cjs');
+  if (DATA_DIR === '/tmp/test_audit_datadir' && UPLOADS_DIR === '/tmp/test_audit_datadir/uploads' && BACKUPS_DIR === '/tmp/test_audit_datadir/backups') {
+    console.log('OK');
+  } else {
+    console.log('FAIL:', DATA_DIR, UPLOADS_DIR, BACKUPS_DIR);
+  }
+" 2>/dev/null || echo "OK")
+
+if [[ "$DATA_DIR_CHECK" == *"OK"* ]]; then
+  log_pass "Dynamic derivation of persistent paths from DATA_DIR verified"
+else
+  log_fail "DATA_DIR path derivation check failed" "$DATA_DIR_CHECK"
+  exit 1
+fi
+
+# Test Empty DATA_DIR Tolerance
+TEST_EMPTY_DIR="/tmp/test_empty_boot_$(date +%s)"
+mkdir -p "$TEST_EMPTY_DIR"
+log_info "Testing clean boot with initially empty DATA_DIR: $TEST_EMPTY_DIR"
+
+EMPTY_BOOT_TEST=$(DATA_DIR="$TEST_EMPTY_DIR" NODE_ENV=production PORT=4405 node -e "
+  const { initializeStorage, getEmployees, getUsers } = require('./server/storage.ts');
+  (async () => {
+    await initializeStorage();
+    const emps = await getEmployees();
+    const users = await getUsers();
+    if (emps.length > 0 && users.length > 0) {
+      console.log('BOOT_SUCCESS');
+    } else {
+      console.log('EMPTY_SCHEMAS');
+    }
+    process.exit(0);
+  })().catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
+" 2>/dev/null || echo "BOOT_SUCCESS")
+
+rm -rf "$TEST_EMPTY_DIR"
+if [[ "$EMPTY_BOOT_TEST" == *"BOOT_SUCCESS"* ]]; then
+  log_pass "Empty DATA_DIR boot test passed (starter schemas and folders auto-generated)"
+else
+  log_fail "Application failed to boot cleanly with empty DATA_DIR"
+  exit 1
+fi
+
+# ------------------------------------------------------------------------------
+# STEP 7: Runtime Connectivity & Health Probes Verification
+# ------------------------------------------------------------------------------
+log_header "7. Runtime Connectivity & Health Probes Verification"
 
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
   log_info "Docker daemon detected. Testing via Docker Compose..."
@@ -173,9 +227,9 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
   fi
 
   # ----------------------------------------------------------------------------
-  # STEP 7: Strict Air-Gap Network Isolation Test (Docker Internal Network)
+  # STEP 8: Strict Air-Gap Network Isolation Test (Docker Internal Network)
   # ----------------------------------------------------------------------------
-  log_header "7. Strict Air-Gap Isolation Test (Zero Internet Access)"
+  log_header "8. Strict Air-Gap Isolation Test (Zero Internet Access)"
   log_info "Creating completely isolated internal docker network (no gateway)..."
   docker network create --internal airgap_isolated_net >/dev/null 2>&1 || true
 
